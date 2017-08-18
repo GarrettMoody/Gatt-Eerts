@@ -32,7 +32,7 @@ public class OnlineMaps : MonoBehaviour, ISerializationCallbackReceiver
     /// <summary>
     /// The current version of Online Maps
     /// </summary>
-    public const string version = "2.5.12.1";
+    public const string version = "2.5.13.1";
 
     /// <summary>
     /// The maximum zoom level.
@@ -1175,8 +1175,11 @@ public class OnlineMaps : MonoBehaviour, ISerializationCallbackReceiver
 
         if (defaultColors != null && texture != null)
         {
-            texture.SetPixels(defaultColors);
-            texture.Apply();
+            if (texture.width * texture.height == defaultColors.Length)
+            {
+                texture.SetPixels(defaultColors);
+                texture.Apply();
+            }
         }
 
         drawingElements = null;
@@ -1649,6 +1652,45 @@ public class OnlineMaps : MonoBehaviour, ISerializationCallbackReceiver
     }
 
     /// <summary>
+    /// Removes all markers that contain a tag.
+    /// </summary>
+    /// <param name="tags">Tags of markers that must be removed.</param>
+    public void RemoveMarkersByTag(params string[] tags)
+    {
+        if (tags.Length == 0) return;
+
+        int countRemoved = 0;
+        for (int i = 0; i < markers.Length; i++)
+        {
+            OnlineMapsMarker marker = markers[i];
+            if (marker.tags == null || marker.tags.Count == 0) continue;
+
+            bool hasTag = false;
+            for (int j = 0; j < tags.Length; j++)
+            {
+                if (marker.tags.Contains(tags[j]))
+                {
+                    hasTag = true;
+                    break;
+                }
+            }
+
+            if (hasTag)
+            {
+                marker.Dispose();
+                countRemoved++;
+            }
+            else markers[i - countRemoved] = marker;
+        }
+
+        if (countRemoved > 0)
+        {
+            Array.Resize(ref markers, markers.Length - countRemoved);
+            Redraw();
+        }
+    }
+
+    /// <summary>
     /// This method is for the editor. \n
     /// Please do not use it.
     /// </summary>
@@ -1899,8 +1941,15 @@ public class OnlineMaps : MonoBehaviour, ISerializationCallbackReceiver
     public void SetTexture(Texture2D newTexture)
     {
         texture = newTexture;
-        width = newTexture.width;
-        height = newTexture.height;
+        width = texture.width;
+        height = texture.height;
+
+        if (target == OnlineMapsTarget.texture && useSmartTexture)
+        {
+            smartTexture = new Texture2D(texture.width / 2, texture.height / 2, TextureFormat.RGB24, false);
+            smartTexture.wrapMode = TextureWrapMode.Clamp;
+        }
+
         allowRedraw = true;
         needRedraw = true;
         redrawType = OnlineMapsRedrawType.full;

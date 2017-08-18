@@ -2,6 +2,7 @@
 /*   http://www.infinity-code.com   */
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -40,6 +41,9 @@ public class OnlineMapsMarkerBase: IOnlineMapsInteractiveElement
     /// </summary>
     public Action<OnlineMapsMarkerBase> OnEnabledChange;
 
+    /// <summary>
+    /// Event occurs when the marker is initialized.
+    /// </summary>
     public Action<OnlineMapsMarkerBase> OnInitComplete;
 
     /// <summary>
@@ -86,6 +90,11 @@ public class OnlineMapsMarkerBase: IOnlineMapsInteractiveElement
     /// Zoom range, in which the marker will be displayed.
     /// </summary>
     public OnlineMapsRange range;
+
+    /// <summary>
+    /// List of tags.
+    /// </summary>
+    public List<string> tags;
 
     [SerializeField]
     protected bool _enabled = true;
@@ -171,6 +180,7 @@ public class OnlineMapsMarkerBase: IOnlineMapsInteractiveElement
     public OnlineMapsMarkerBase()
     {
         range = new OnlineMapsRange(3, OnlineMaps.MAXZOOM);
+        tags = new List<string>();
     }
 
     /// <summary>
@@ -178,6 +188,9 @@ public class OnlineMapsMarkerBase: IOnlineMapsInteractiveElement
     /// </summary>
     public void Dispose()
     {
+        tags = null;
+        customData = null;
+
         OnClick = null;
         OnDoubleClick = null;
         OnDrag = null;

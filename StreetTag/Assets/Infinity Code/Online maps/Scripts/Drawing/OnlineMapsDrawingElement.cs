@@ -1141,10 +1141,26 @@ public class OnlineMapsDrawingElement: IOnlineMapsInteractiveElement
     /// </summary>
     public void OnRemoveFromMap()
     {
-        if (mesh == null) return;
+        if (materials != null)
+        {
+            foreach (Material material in materials)
+            {
+                OnlineMapsUtils.DestroyImmediate(material);
+            }
+            materials = null;
+        }
 
-        OnlineMapsUtils.DestroyImmediate(gameObject);
-        mesh = null;
+        if (mesh != null)
+        {
+            OnlineMapsUtils.DestroyImmediate(mesh);
+            mesh = null;
+        }
+
+        if (gameObject != null)
+        {
+            OnlineMapsUtils.DestroyImmediate(gameObject);
+            gameObject = null;
+        }
     }
 
     protected void UpdateMaterialsQuote(OnlineMapsTileSetControl control, int index)

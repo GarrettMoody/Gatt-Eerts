@@ -317,6 +317,7 @@ MonoBehaviour:
       min: 3
       maxLimit: 20
       minLimit: 3
+    tags: []
     _enabled: 1
     latitude: 51.49641036987305
     longitude: -0.2581616938114166
@@ -355,6 +356,7 @@ MonoBehaviour:
       min: 0
       maxLimit: 20
       minLimit: 3
+    tags: []
     _enabled: 1
     latitude: 0
     longitude: 0

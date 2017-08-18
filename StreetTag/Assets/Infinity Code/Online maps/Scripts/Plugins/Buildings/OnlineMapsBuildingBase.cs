@@ -204,10 +204,8 @@ public abstract class OnlineMapsBuildingBase:MonoBehaviour
     private bool HitTest()
     {
         RaycastHit hit;
-        return
-            buildingCollider.Raycast(
-                OnlineMapsTileSetControl.instance.activeCamera.ScreenPointToRay(Input.GetTouch(0).position), out hit,
-                OnlineMapsUtils.maxRaycastDistance);
+        OnlineMapsTileSetControl control = OnlineMapsTileSetControl.instance;
+        return buildingCollider.Raycast(control.activeCamera.ScreenPointToRay(control.GetInputPosition()), out hit, OnlineMapsUtils.maxRaycastDistance);
     }
 
     /// <summary>

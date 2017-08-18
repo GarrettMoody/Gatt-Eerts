@@ -583,6 +583,7 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
         ms.Remove(marker);
         markers3D = ms.ToArray();
         if (marker.instance != null) OnlineMapsUtils.DestroyImmediate(marker.instance);
+        marker.Dispose();
     }
 
     /// <summary>
@@ -600,6 +601,43 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
         ms.Remove(marker);
         markers3D = ms.ToArray();
         if (marker.instance != null) OnlineMapsUtils.DestroyImmediate(marker.instance);
+        marker.Dispose();
+    }
+
+    /// <summary>
+    /// Removes all 3D markers that contain a tag.
+    /// </summary>
+    /// <param name="tags">Tags of 3D markers that must be removed.</param>
+    public void RemoveMarkers3DByTag(params string[] tags)
+    {
+        if (tags.Length == 0) return;
+
+        int countRemoved = 0;
+        for (int i = 0; i < markers3D.Length; i++)
+        {
+            OnlineMapsMarker3D marker = markers3D[i];
+            if (marker.tags == null || marker.tags.Count == 0) continue;
+
+            bool hasTag = false;
+            for (int j = 0; j < tags.Length; j++)
+            {
+                if (marker.tags.Contains(tags[j]))
+                {
+                    hasTag = true;
+                    break;
+                }
+            }
+
+            if (hasTag)
+            {
+                marker.Dispose();
+                if (marker.instance != null) OnlineMapsUtils.DestroyImmediate(marker.instance);
+                countRemoved++;
+            }
+            else markers3D[i - countRemoved] = marker;
+        }
+
+        if (countRemoved > 0) Array.Resize(ref markers3D, markers3D.Length - countRemoved);
     }
 
     public OnlineMapsXML SaveMarkers3D(OnlineMapsXML parent)

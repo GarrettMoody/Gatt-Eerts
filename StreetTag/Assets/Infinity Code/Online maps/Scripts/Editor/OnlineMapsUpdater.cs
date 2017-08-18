@@ -136,12 +136,6 @@ public class OnlineMapsUpdater : EditorWindow
         return result;
     }
 
-    private static void SetLastVersion()
-    {
-        EditorPrefs.SetString(lastVersionKey, lastVersionID);
-        EditorApplication.update -= SetLastVersion;
-    }
-
     private string GetUpdateKey()
     {
         WebClient client = new WebClient();
@@ -162,10 +156,11 @@ public class OnlineMapsUpdater : EditorWindow
         try
         {
             response = client.UploadString("http://infinity-code.com/products_update/checkupdates.php",
-            "k=" + WWW.EscapeURL(updateKey) + "&v=" + OnlineMaps.version + "&c=" + (int)channel);
+                "k=" + WWW.EscapeURL(updateKey) + "&v=" + OnlineMaps.version + "&c=" + (int)channel);
         }
-        catch
+        catch(Exception exception)
         {
+            Debug.Log(exception.Message);
             return;
         }
 
@@ -232,6 +227,12 @@ public class OnlineMapsUpdater : EditorWindow
     {
         EditorPrefs.SetString(invoiceNumberKey, invoiceNumber);
         EditorPrefs.SetInt(channelKey, (int) channel);
+    }
+
+    private static void SetLastVersion()
+    {
+        EditorPrefs.SetString(lastVersionKey, lastVersionID);
+        EditorApplication.update -= SetLastVersion;
     }
 
     public class OnlineMapsUpdateItem

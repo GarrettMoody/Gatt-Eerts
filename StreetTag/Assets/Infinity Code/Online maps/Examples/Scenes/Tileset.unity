@@ -279,6 +279,7 @@ MonoBehaviour:
       min: 0
       maxLimit: 20
       minLimit: 3
+    tags: []
     _enabled: 1
     latitude: 0
     longitude: 0

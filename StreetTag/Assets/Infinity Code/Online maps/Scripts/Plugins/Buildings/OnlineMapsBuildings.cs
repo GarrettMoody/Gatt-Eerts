@@ -175,6 +175,30 @@ public class OnlineMapsBuildings : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Disables buildings on the map.
+    /// </summary>
+    public void Disable()
+    {
+        RemoveAllBuildings();
+        if (osmRequest != null)
+        {
+            osmRequest.OnComplete = null;
+            osmRequest = null;
+        }
+        enabled = false;
+    }
+
+    /// <summary>
+    /// Enables previously disabled buildings on the map.
+    /// </summary>
+    public void Enable()
+    {
+        topLeft = new OnlineMapsVector2i();
+        bottomRight = new OnlineMapsVector2i();
+        enabled = true;
+    }
+
     private void GenerateBuildings()
     {
         long startTicks = DateTime.Now.Ticks;
@@ -355,12 +379,14 @@ public class OnlineMapsBuildings : MonoBehaviour
         foreach (KeyValuePair<string, OnlineMapsBuildingBase> building in buildings)
         {
             if (OnBuildingDispose != null) OnBuildingDispose(building.Value);
+            building.Value.Dispose();
             OnlineMapsUtils.DestroyImmediate(building.Value.gameObject);
         }
 
         foreach (KeyValuePair<string, OnlineMapsBuildingBase> building in unusedBuildings)
         {
             if (OnBuildingDispose != null) OnBuildingDispose(building.Value);
+            building.Value.Dispose();
             OnlineMapsUtils.DestroyImmediate(building.Value.gameObject);
         }
 
