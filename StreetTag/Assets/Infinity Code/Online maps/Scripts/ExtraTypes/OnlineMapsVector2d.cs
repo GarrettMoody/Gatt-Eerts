@@ -3,7 +3,10 @@ using UnityEngine;
 
 public struct OnlineMapsVector2d
 {
+    [OnlineMapsJSON.Alias("lng")]
     public double x;
+
+    [OnlineMapsJSON.Alias("lat")]
     public double y;
 
     public OnlineMapsVector2d(double x, double y)

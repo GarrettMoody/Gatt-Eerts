@@ -55,7 +55,7 @@ namespace InfinityCode.OnlineMapsExamples
             // Create XMLDocument and first child
             OnlineMapsXML xml = new OnlineMapsXML("Markers");
 
-            // Appands markers
+            // Save markers data
             foreach (OnlineMapsMarker3D marker in OnlineMapsControlBase3D.instance.markers3D)
             {
                 // Create marker node

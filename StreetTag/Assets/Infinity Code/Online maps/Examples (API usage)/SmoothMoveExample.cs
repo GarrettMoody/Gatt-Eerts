@@ -28,6 +28,8 @@ namespace InfinityCode.OnlineMapsExamples
 
         private Vector2 fromPosition;
         private Vector2 toPosition;
+        private double fromTileX, fromTileY, toTileX, toTileY;
+        private int moveZoom;
 
 
         private void OnGUI()
@@ -42,9 +44,9 @@ namespace InfinityCode.OnlineMapsExamples
                 toPosition = OnlineMapsLocationService.instance.position;
 
                 // calculates tile positions
-                double fromTileX, fromTileY, toTileX, toTileY;
-                OnlineMaps.instance.projection.CoordinatesToTile(fromPosition.x, fromPosition.y, OnlineMaps.instance.zoom, out fromTileX, out fromTileY);
-                OnlineMaps.instance.projection.CoordinatesToTile(toPosition.x, toPosition.y, OnlineMaps.instance.zoom, out toTileX, out toTileY);
+                moveZoom = OnlineMaps.instance.zoom;
+                OnlineMaps.instance.projection.CoordinatesToTile(fromPosition.x, fromPosition.y, moveZoom, out fromTileX, out fromTileY);
+                OnlineMaps.instance.projection.CoordinatesToTile(toPosition.x, toPosition.y, moveZoom, out toTileX, out toTileY);
 
                 // if tile offset < 4, then start smooth movement
                 if (OnlineMapsUtils.Magnitude(fromTileX, fromTileY, toTileX, toTileY) < 4)
@@ -78,7 +80,10 @@ namespace InfinityCode.OnlineMapsExamples
             }
 
             // Set new position
-            OnlineMaps.instance.position = Vector2.Lerp(fromPosition, toPosition, angle);
+            double px = (toTileX - fromTileX) * angle + fromTileX;
+            double py = (toTileY - fromTileY) * angle + fromTileY;
+            OnlineMaps.instance.projection.TileToCoordinates(px, py, moveZoom, out px, out py);
+            OnlineMaps.instance.SetPosition(px, py);
         }
     }
 }

@@ -32,7 +32,7 @@ public class OnlineMaps : MonoBehaviour, ISerializationCallbackReceiver
     /// <summary>
     /// The current version of Online Maps
     /// </summary>
-    public const string version = "2.5.13.1";
+    public const string version = "2.5.16.1";
 
     /// <summary>
     /// The maximum zoom level.
@@ -500,6 +500,17 @@ public class OnlineMaps : MonoBehaviour, ISerializationCallbackReceiver
         {
             if (Math.Abs(bottomRightLatitude) < double.Epsilon && Math.Abs(bottomRightLongitude) < double.Epsilon) UpdateBottonRightPosition();
             return new Vector2((float)bottomRightLongitude, (float)bottomRightLatitude);
+        }
+    }
+
+    /// <summary>
+    /// Gets the coordinates of the map view.
+    /// </summary>
+    public OnlineMapsGeoRect bounds
+    {
+        get
+        {
+            return new OnlineMapsGeoRect(topLeftLongitude, topLeftLatitude, bottomRightLongitude, bottomRightLatitude);
         }
     }
 
@@ -1469,6 +1480,7 @@ public class OnlineMaps : MonoBehaviour, ISerializationCallbackReceiver
                 if (OnlineMapsTile.OnTileDownloaded != null) OnlineMapsTile.OnTileDownloaded(tile);
             }
 
+            tile.MarkLoaded();
             CheckRedrawType();
         }
         else tile.OnDownloadError();
@@ -2111,6 +2123,7 @@ public class OnlineMaps : MonoBehaviour, ISerializationCallbackReceiver
                     tile.texture = tileTexture as Texture2D;
                     tile.status = OnlineMapsTileStatus.loaded;
                 }
+                tile.MarkLoaded();
                 CheckRedrawType();
                 loadOnline = false;
             }

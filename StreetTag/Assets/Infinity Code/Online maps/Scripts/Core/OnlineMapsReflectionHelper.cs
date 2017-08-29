@@ -13,6 +13,17 @@ public static class OnlineMapsReflectionHelper
 {
     private const BindingFlags DefaultLookup = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
 
+    public static string GetEnumDescription(Enum value)
+    {
+        FieldInfo fi = value.GetType().GetField(value.ToString());
+
+        OnlineMapsOpenRouteService.DescriptionAttribute[] attributes = (OnlineMapsOpenRouteService.DescriptionAttribute[])fi.GetCustomAttributes(typeof(OnlineMapsOpenRouteService.DescriptionAttribute), false);
+
+        if (attributes.Length > 0) return attributes[0].Description;
+        return value.ToString();
+    }
+
+
     /// <summary>
     /// Searches for the fields defined for the current Type, using the specified binding constraints.
     /// </summary>

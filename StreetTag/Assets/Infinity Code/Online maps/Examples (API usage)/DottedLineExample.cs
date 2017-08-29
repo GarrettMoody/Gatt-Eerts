@@ -46,8 +46,9 @@ namespace InfinityCode.OnlineMapsExamples
 
             mesh = meshFilter.sharedMesh = new Mesh();
             mesh.name = "Dotted Line";
+            mesh.MarkDynamic();
 
-            meshRenderer.material = material;
+            meshRenderer.sharedMaterial = material;
 
             // Init coordinates of points.
             coords = new Vector2[5];
@@ -147,6 +148,7 @@ namespace InfinityCode.OnlineMapsExamples
             mesh.normals = normals.ToArray();
             mesh.uv = uvs.ToArray();
             mesh.triangles = triangles.ToArray();
+            mesh.RecalculateBounds();
 
             // Scale texture
             Vector2 scale = new Vector2(totalDistance / size, 1);

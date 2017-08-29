@@ -29,6 +29,8 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
     /// </summary>
     public Action<OnlineMapsTile, Material> OnDrawTile;
 
+    public Action<OnlineMapsMarker, List<Vector3>, int> OnGenerateMarkerVertices;
+
     /// <summary>
     /// Event, which intercepts the request to BingMaps Elevation API.
     /// </summary>
@@ -58,6 +60,8 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
     /// Event that occurs after the map mesh has been updated.
     /// </summary>
     public Action OnMeshUpdated;
+
+    public Action<Mesh, Renderer> OnSetMarkersMesh;
 
     /// <summary>
     /// Event, which occurs when the smooth zoom is started.
@@ -1232,6 +1236,8 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
                 material.SetTexture("_MainTex", usedTextures[i]);
             }
         }
+
+        if (OnSetMarkersMesh != null) OnSetMarkersMesh(markersMesh, markersRenderer);
     }
 
     public void StartDownloadElevation(double sx, double sy, double ex, double ey)
@@ -1498,13 +1504,21 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
                 if (firstUpdate || elevationZoomRange.InRange(zoom))
                 {
                     colliderWithElevation = true;
-                    if (colliderType == OnlineMapsColliderType.fullMesh) meshCollider.sharedMesh = Instantiate(tilesetMesh) as Mesh;
+                    if (colliderType == OnlineMapsColliderType.fullMesh)
+                    {
+                        if (meshCollider.sharedMesh != null) OnlineMapsUtils.DestroyImmediate(meshCollider.sharedMesh);
+                        meshCollider.sharedMesh = Instantiate(tilesetMesh) as Mesh;
+                    }
                     else UpdateSimpleMeshCollider(yScale, tlx, tly, brx, bry);
                 }
                 else if (colliderWithElevation)
                 {
                     colliderWithElevation = false;
-                    if (colliderType == OnlineMapsColliderType.fullMesh) meshCollider.sharedMesh = Instantiate(tilesetMesh) as Mesh;
+                    if (colliderType == OnlineMapsColliderType.fullMesh)
+                    {
+                        if (meshCollider.sharedMesh != null) OnlineMapsUtils.DestroyImmediate(meshCollider.sharedMesh);
+                        meshCollider.sharedMesh = Instantiate(tilesetMesh) as Mesh;
+                    }
                     else UpdateSimpleMeshCollider(yScale, tlx, tly, brx, bry);
                 }
             }
@@ -1858,10 +1872,14 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
             fx = fx * OnlineMapsUtils.tileSize - offset.x;
             fy = (fy - py) * OnlineMapsUtils.tileSize - offset.y;
 
-            if (marker.texture == null) marker.texture = map.defaultMarkerTexture;
+            if (marker.texture == null)
+            {
+                marker.texture = map.defaultMarkerTexture;
+                marker.Init();
+            }
 
-            float markerWidth = marker.texture.width * marker.scale;
-            float markerHeight = marker.texture.height * marker.scale;
+            float markerWidth = marker.width * marker.scale;
+            float markerHeight = marker.height * marker.scale;
 
             float rx1 = (float)(fx * cx);
             float ry1 = (float)(fy * cy);
@@ -1906,12 +1924,16 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
 
             p1.y = p2.y = p3.y = p4.y = y + yOffset;
 
+            int vIndex = markersVertices.Count;
+
             markersVertices.Add(p1);
             markersVertices.Add(p2);
             markersVertices.Add(p3);
             markersVertices.Add(p4);
 
             usedMarkers.Add(new TilesetFlatMarker(marker, p1 + tpos, p2 + tpos, p3 + tpos, p4 + tpos));
+
+            if (OnGenerateMarkerVertices != null) OnGenerateMarkerVertices(marker, markersVertices, vIndex);
 
             if (marker.texture == map.defaultMarkerTexture)
             {

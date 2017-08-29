@@ -21,6 +21,11 @@ public class OnlineMapsTile
     public static Texture2D emptyColorTexture;
 
     /// <summary>
+    /// The event that occurs when all tiles are loaded.
+    /// </summary>
+    public static Action OnAllTilesLoaded;
+
+    /// <summary>
     /// The event, which allows you to control the path of tile in Resources.
     /// </summary>
     public static Func<OnlineMapsTile, string> OnGetResourcesPath;
@@ -31,6 +36,10 @@ public class OnlineMapsTile
     /// </summary>
     public static Func<OnlineMapsTile, string, string> OnReplaceURLToken;
 
+    /// <summary>
+    /// The event which allows to intercept the replacement tokens in the traffic url.\n
+    /// Return the value, or null - if you do not want to modify the value.
+    /// </summary>
     public static Func<OnlineMapsTile, string, string> OnReplaceTrafficURLToken;
 
     /// <summary>
@@ -180,6 +189,7 @@ public class OnlineMapsTile
     private byte[] labelData;
     private Color32[] labelColors;
     private OnlineMapsTrafficProvider _trafficProvider;
+    private List<object> blockers;
 
     /// <summary>
     /// Array of colors of the tile.
@@ -225,6 +235,11 @@ public class OnlineMapsTile
             if (_dtiles == null) _dtiles = new Dictionary<ulong, OnlineMapsTile>();
             return _dtiles;
         }
+    }
+
+    public bool isBlocked
+    {
+        get { return blockers != null && blockers.Count > 0; }
     }
 
     public OnlineMapsTrafficProvider trafficProvider
@@ -350,6 +365,16 @@ public class OnlineMapsTile
         hasColors = true;
     }
 
+    /// <summary>
+    /// Blocks the tile from disposing.
+    /// </summary>
+    /// <param name="blocker">The object that prohibited the disposing.</param>
+    public void Block(object blocker)
+    {
+        if (blockers == null) blockers = new List<object>();
+        blockers.Add(blocker);
+    }
+
     public void CheckTextureSize(Texture2D texture)
     {
         if (texture == null) return;
@@ -435,6 +460,7 @@ public class OnlineMapsTile
         labelData = null;
         labelColors = null;
         data = null;
+        blockers = null;
 
         OnSetColor = null;
         if (hasChilds) foreach (OnlineMapsTile child in childs) if (child != null) child.parent = null;
@@ -572,6 +598,21 @@ public class OnlineMapsTile
         else texture.LoadImage(bytes);
     }
 
+    public void MarkLoaded()
+    {
+        bool fullLoaded = true;
+        foreach (OnlineMapsTile tile in tiles)
+        {
+            if (tile.status != OnlineMapsTileStatus.loaded && tile.status != OnlineMapsTileStatus.error)
+            {
+                fullLoaded = false;
+                break;
+            }
+        }
+
+        if (fullLoaded && OnAllTilesLoaded != null) OnAllTilesLoaded();
+    }
+
     private void MergeColors()
     {
         try
@@ -639,6 +680,16 @@ public class OnlineMapsTile
     public override string ToString()
     {
         return string.Format("{0}x{1}.jpg", x, y);
+    }
+
+    /// <summary>
+    /// Remove an object that prevents the tile from disposing.
+    /// </summary>
+    /// <param name="blocker">The object that prohibited the disposing.</param>
+    public void Unblock(object blocker)
+    {
+        if (blockers == null) return;
+        blockers.Remove(blocker);
     }
 
     public static void UnloadUnusedTiles()

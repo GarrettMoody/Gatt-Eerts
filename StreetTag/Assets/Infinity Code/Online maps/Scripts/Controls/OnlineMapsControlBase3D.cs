@@ -304,7 +304,9 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
 
         if (allowAddMarker3DByN && Input.GetKeyUp(KeyCode.N))
         {
-            OnlineMapsMarker3D marker = AddMarker3D(GetCoords(), default3DMarker != null? Instantiate(default3DMarker) as GameObject: null);
+            GameObject prefabInstance = default3DMarker != null ? Instantiate(default3DMarker) as GameObject : null;
+            OnlineMapsMarker3D marker = AddMarker3D(GetCoords(), prefabInstance);
+            if (prefabInstance != null) OnlineMapsUtils.DestroyImmediate(prefabInstance);
             marker.control = this;
             marker.scale = marker3DScale;
         }

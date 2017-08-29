@@ -157,7 +157,7 @@ public class OnlineMapsBuildingBuiltIn : OnlineMapsBuildingBase
 
         OnlineMapsBuildingBuiltIn building = houseGO.AddComponent<OnlineMapsBuildingBuiltIn>();
         building.way = way;
-        building.nodes = usedNodes;
+        building.nodes = new List<OnlineMapsOSMNode>(usedNodes);
         houseGO.transform.localPosition = centerPoint;
         houseGO.transform.localRotation = Quaternion.Euler(Vector3.zero);
         houseGO.transform.localScale = Vector3.one;

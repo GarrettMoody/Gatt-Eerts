@@ -23,7 +23,9 @@ GameObject:
   - component: {fileID: 64813018798229914}
   - component: {fileID: 23509663246067638}
   - component: {fileID: 54387809372939634}
-  - component: {fileID: 114224402805567436}
+  - component: {fileID: 114736338687226742}
+  - component: {fileID: 114406244760173988}
+  - component: {fileID: 114091653428525834}
   m_Layer: 0
   m_Name: Player1
   m_TagString: Untagged
@@ -112,7 +114,7 @@ MeshCollider:
   m_InflateMesh: 0
   m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &114224402805567436
+--- !u!114 &114091653428525834
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -120,7 +122,59 @@ MonoBehaviour:
   m_GameObject: {fileID: 1525972197618494}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3fd7b2c9a58294746b223966db879733, type: 3}
+  m_Script: {fileID: -1768714887, guid: dc443db3e92b4983b9738c1131f555cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prefab: {fileID: 1525972197618494}
+  m_TransformSyncMode: 3
+  m_SendInterval: 0.1
+  m_SyncRotationAxis: 0
+  m_RotationSyncCompression: 0
+  m_SyncSpin: 0
+  m_MovementTheshold: 0.001
+  m_VelocityThreshold: 0.0001
+  m_SnapThreshold: 5
+  m_InterpolateRotation: 1
+  m_InterpolateMovement: 1
+--- !u!114 &114406244760173988
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1525972197618494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8966b6fd3f6204b16b0c1df1758bd656, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &114736338687226742
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1525972197618494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 372142912, guid: dc443db3e92b4983b9738c1131f555cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SceneId:
+    m_Value: 0
+  m_AssetId:
+    i0: 56
+    i1: 104
+    i2: 211
+    i3: 199
+    i4: 94
+    i5: 76
+    i6: 100
+    i7: 112
+    i8: 123
+    i9: 163
+    i10: 145
+    i11: 228
+    i12: 190
+    i13: 194
+    i14: 202
+    i15: 206
+  m_ServerOnly: 0
+  m_LocalPlayerAuthority: 1

@@ -10,19 +10,4 @@ public class PlayerScript : MonoBehaviour {
 	void Start () {
 		map = GameObject.Find ("Map");
 	}
-	
-	void OnTriggerEnter(Collider other) {
-		Debug.Log (this.prefab.name + " hit " + other.gameObject.name);
-
-		if (other.gameObject.name == "Coin(Clone)") {
-			Destroy (other.gameObject);
-			OnlineMapsTileSetControl tsc = (OnlineMapsTileSetControl) map.GetComponent<OnlineMapsTileSetControl>();
-			foreach (OnlineMapsMarker3D marker in tsc.markers3D) {
-				if (marker.instance.gameObject == other.gameObject) {
-					tsc.RemoveMarker3D (marker);
-					map.GetComponent<StreetTagMain> ().AddCoin ();
-				}
-			}
-		}
-	}
 }

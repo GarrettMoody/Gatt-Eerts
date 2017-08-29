@@ -189,6 +189,8 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
         _prefab = prefab;
         
         instance.transform.parent = parent;
+        instance.transform.localRotation = Quaternion.Euler(0, _rotationY, 0);
+
         instance.layer = parent.gameObject.layer;
         instance.AddComponent<OnlineMapsMarker3DInstance>().marker = this;
         visible = false;

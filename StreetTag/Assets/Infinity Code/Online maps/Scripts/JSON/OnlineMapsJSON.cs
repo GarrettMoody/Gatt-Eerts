@@ -163,7 +163,8 @@ public class OnlineMapsJSON
     {
         object cv;
         Type t = memberType == MemberTypes.Field ? ((FieldInfo) member).FieldType : ((PropertyInfo) member).PropertyType;
-        if (item is IDictionary) cv = DeserializeObject(t, item as Dictionary<string, object>);
+        if (t == typeof(System.Object)) cv = item;
+        else if (item is IDictionary) cv = DeserializeObject(t, item as Dictionary<string, object>);
         else if (item is IList) cv = DeserializeArray(t, item as List<object>);
         else cv = DeserializeValue(t, item);
 
@@ -662,6 +663,23 @@ public class OnlineMapsJSON
         if (obj == null) return new OnlineMapsJSONValue(obj, OnlineMapsJSONValue.ValueType.NULL);
 #endif
         if (obj is string || obj is bool || obj is int || obj is long || obj is short || obj is float || obj is double) return new OnlineMapsJSONValue(obj);
+        if (obj is IDictionary)
+        {
+            IDictionary d = obj as IDictionary;
+            OnlineMapsJSONObject dv = new OnlineMapsJSONObject();
+            ICollection keys = d.Keys;
+            ICollection values = d.Values;
+            IEnumerator keysEnum = keys.GetEnumerator();
+            IEnumerator valuesEnum = values.GetEnumerator();
+            while (keysEnum.MoveNext() && valuesEnum.MoveNext())
+            {
+                object k = keysEnum.Current;
+                object v = valuesEnum.Current;
+
+                dv.Add(k as string, Serialize(v));
+            }
+            return dv;
+        }
         if (obj is IEnumerable)
         {
             IEnumerable v = (IEnumerable)obj;

@@ -236,7 +236,7 @@ public class OnlineMapsMarkerBase: IOnlineMapsInteractiveElement
         
     }
 
-    private void OnMarkerPress(OnlineMapsMarkerBase onlineMapsMarkerBase)
+    private void OnMarkerPress(OnlineMapsMarkerBase marker)
     {
         OnlineMapsControlBase.instance.dragMarker = this;
     }
@@ -267,7 +267,16 @@ public class OnlineMapsMarkerBase: IOnlineMapsInteractiveElement
     /// <summary>
     /// Makes the marker dragable.
     /// </summary>
+    [Obsolete("Fixed a typo. Use SetDraggable.")]
     public void SetDragable()
+    {
+        OnPress += OnMarkerPress;
+    }
+
+    /// <summary>
+    /// Makes the marker draggable.
+    /// </summary>
+    public void SetDraggable()
     {
         OnPress += OnMarkerPress;
     }

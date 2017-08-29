@@ -441,12 +441,14 @@ public class OnlineMapsCache:MonoBehaviour
     {
         if (useMemoryCache && TryLoadFromMemoryCache(tile))
         {
+            tile.MarkLoaded();
             map.Redraw();
             return true;
         }
 #if ALLOW_FILECACHE
         if (useFileCache && TryLoadFromFileCache(tile))
         {
+            tile.MarkLoaded();
             map.Redraw();
             return true;
         }

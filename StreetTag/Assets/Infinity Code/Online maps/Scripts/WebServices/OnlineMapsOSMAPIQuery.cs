@@ -1,6 +1,7 @@
 ﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -493,6 +494,7 @@ public class OnlineMapsOSMAPIQuery: OnlineMapsTextWebService
                 i = ei + 1;
                 GetAttributeValue(s, i, out si, out ei);
                 string value = s.Substring(si, ei - si);
+                
                 attributeKeys[attributeCount] = key;
                 attributeValues[attributeCount] = value;
                 attributeCount++;
@@ -518,7 +520,7 @@ public class OnlineMapsOSMAPIQuery: OnlineMapsTextWebService
 
                 if (s[i] == '"')
                 {
-                    if (svi == -1) svi = ++i;
+                    if (svi == -1) svi = i + 1;
                     else
                     {
                         evi = i;

@@ -12,10 +12,27 @@ namespace InfinityCode.OnlineMapsExamples
     [AddComponentMenu("Infinity Code/Online Maps/Examples (API Usage)/OpenRouteServiceExample")]
     public class OpenRouteServiceExample : MonoBehaviour
     {
+        /// <summary>
+        /// Open Route Service API key
+        /// </summary>
+        public string key;
+
         private void Start()
         {
             // Looking for pedestrian route between the coordinates.
-            OnlineMapsOpenRouteService.Find(new Vector2(8.6817521f, 49.4173462f), new Vector2(8.6828883f, 49.4067577f), "ru", OnlineMapsOpenRouteService.OnlineMapsOpenRouteServicePref.Pedestrian).OnComplete += OnRequestComplete;
+            OnlineMapsOpenRouteService.Directions(
+                new OnlineMapsOpenRouteService.DirectionParams(key, 
+                    new []
+                    {
+                        // Coordinates
+                        new OnlineMapsVector2d(8.6817521f, 49.4173462f), 
+                        new OnlineMapsVector2d(8.6828883f, 49.4067577f)
+                    })
+                {
+                    // Extra params
+                    language = "ru",
+                    profile = OnlineMapsOpenRouteService.DirectionParams.Profile.footWalking
+                }).OnComplete += OnRequestComplete;
         }
 
         /// <summary>

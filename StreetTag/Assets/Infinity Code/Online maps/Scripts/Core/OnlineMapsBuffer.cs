@@ -640,7 +640,7 @@ public class OnlineMapsBuffer
         {
             foreach (OnlineMapsTile tile in OnlineMapsTile.tiles)
             {
-                if (!tile.used) tile.Dispose();
+                if (!tile.used && !tile.isBlocked) tile.Dispose();
             }
         }
     }

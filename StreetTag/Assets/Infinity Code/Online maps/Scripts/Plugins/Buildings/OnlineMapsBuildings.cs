@@ -178,20 +178,17 @@ public class OnlineMapsBuildings : MonoBehaviour
     /// <summary>
     /// Disables buildings on the map.
     /// </summary>
+    [Obsolete("Just disable the component.")]
     public void Disable()
     {
-        RemoveAllBuildings();
-        if (osmRequest != null)
-        {
-            osmRequest.OnComplete = null;
-            osmRequest = null;
-        }
+        OnDisable();
         enabled = false;
     }
 
     /// <summary>
     /// Enables previously disabled buildings on the map.
     /// </summary>
+    [Obsolete("Just enable the component.")]
     public void Enable()
     {
         topLeft = new OnlineMapsVector2i();
@@ -338,6 +335,19 @@ public class OnlineMapsBuildings : MonoBehaviour
         if (OnRequestComplete != null) OnRequestComplete();
     }
 
+    private void OnDisable()
+    {
+        RemoveAllBuildings();
+        if (osmRequest != null)
+        {
+            osmRequest.OnComplete = null;
+            osmRequest = null;
+        }
+        sendBuildingsReceived = false;
+        topLeft = OnlineMapsVector2i.zero;
+        bottomRight = OnlineMapsVector2i.zero;
+    }
+
     private void OnEnable()
     {
         _instance = this;
@@ -351,6 +361,8 @@ public class OnlineMapsBuildings : MonoBehaviour
         buildingContainer.transform.localPosition = Vector3.zero;
         buildingContainer.transform.localRotation = Quaternion.Euler(Vector3.zero);
         buildingContainer.transform.localScale = Vector3.one;
+
+        if (map != null) Start();
     }
 
     private void SendRequest()

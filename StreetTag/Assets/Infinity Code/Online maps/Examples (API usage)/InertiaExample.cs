@@ -38,7 +38,7 @@ namespace InfinityCode.OnlineMapsExamples
                 speedX.Clear();
                 speedY.Clear();
             }
-				
+
             // If there is interaction with the map.
             if (isInteract)
             {
@@ -70,9 +70,6 @@ namespace InfinityCode.OnlineMapsExamples
                 // Reduces the current speed.
                 rsX *= friction;
                 rsY *= friction;
-
-				if (rsX < 0.000001f && rsY < 0.000001f)
-					rsX = rsY = 0;
             }
         }
 

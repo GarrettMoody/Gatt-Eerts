@@ -47,7 +47,7 @@ namespace InfinityCode.OnlineMapsExamples
             if (File.Exists(path))
             {
                 // Load tile texture from cache.
-                Texture2D tileTexture = new Texture2D(256, 256);
+                Texture2D tileTexture = new Texture2D(256, 256, TextureFormat.RGB24, false);
                 tileTexture.LoadImage(File.ReadAllBytes(path));
                 tileTexture.wrapMode = TextureWrapMode.Clamp;
 

@@ -198,10 +198,7 @@ public class OnlineMapsMarker : OnlineMapsMarkerBase
     /// </value>
     public int width
     {
-        get
-        {
-            return _width;
-        }
+        get { return _width; }
     }
 
     public OnlineMapsMarker()
@@ -335,13 +332,15 @@ public class OnlineMapsMarker : OnlineMapsMarkerBase
     /// <summary>
     /// Initialises this marker.
     /// </summary>
-    public void Init()
+    /// <param name="width">Width of the marker texture.</param>
+    /// <param name="height">Height of the marker texture.</param>
+    public void Init(int? width = null, int? height = null)
     {
         if (texture != null)
         {
             if (map.target == OnlineMapsTarget.texture) _colors = texture.GetPixels32();
-            _width = _textureWidth = texture.width;
-            _height = _textureHeight = texture.height;
+            _width = _textureWidth = width ?? texture.width;
+            _height = _textureHeight = height ?? texture.height;
         }
         else
         {
@@ -349,8 +348,8 @@ public class OnlineMapsMarker : OnlineMapsMarkerBase
             if (defaultTexture != null)
             {
                 if (map.target == OnlineMapsTarget.texture) _colors = defaultTexture.GetPixels32();
-                _width = _textureWidth = defaultTexture.width;
-                _height = _textureHeight = defaultTexture.height;
+                _width = _textureWidth = width ?? defaultTexture.width;
+                _height = _textureHeight = height ?? defaultTexture.height;
             }
         }
         if (Math.Abs(_rotation) > float.Epsilon || Math.Abs(scale - 1) > float.Epsilon) UpdateRotatedBuffer();
@@ -379,7 +378,7 @@ public class OnlineMapsMarker : OnlineMapsMarkerBase
         _lastRotation = _rotation;
         _lastScale = _scale;
 
-        if ((Math.Abs(_rotation) < float.Epsilon && Math.Abs(scale - 1) < float.Epsilon) || map.target == OnlineMapsTarget.tileset)
+        if (map.target == OnlineMapsTarget.tileset || (Math.Abs(_rotation) < float.Epsilon && Math.Abs(scale - 1) < float.Epsilon))
         {
             _width = _textureWidth;
             _height = _textureHeight;

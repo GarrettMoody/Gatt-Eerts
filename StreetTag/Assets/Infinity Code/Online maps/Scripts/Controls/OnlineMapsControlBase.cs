@@ -600,14 +600,10 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
             }
         }
 
-        if (dragMarker == null)
-        {
-            isMapDrag = true;
+        if (dragMarker == null) isMapDrag = true;
 
-            longPressEnumenator = WaitLongPress();
-            StartCoroutine(longPressEnumenator);
-        }
-        else lastClickTimes[0] = 0;
+        longPressEnumenator = WaitLongPress();
+        StartCoroutine(longPressEnumenator);
 
         if (allowUserControl) OnlineMaps.isUserControl = true;
     }
