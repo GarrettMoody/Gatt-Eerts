@@ -466,10 +466,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 941956319}
-  maxLeft: -6.24
-  maxRight: 20
-  resetLeft: 2.84
-  resetRight: 0
+  isRightButton: 0
+  maxPosition: 0
+  resetPosition: 0
   moveSpeed: 0.4
 --- !u!114 &1092804534
 MonoBehaviour:
@@ -1040,8 +1039,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 941956319}
-  maxLeft: -20
-  maxRight: 6.24
-  resetLeft: 0
-  resetRight: -2.88
+  isRightButton: 1
+  maxPosition: 0
+  resetPosition: 0
   moveSpeed: 0.4
