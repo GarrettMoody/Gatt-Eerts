@@ -52,7 +52,7 @@ public class OnlineMapsWelcome:EditorWindow
         Rect rect = GUILayoutUtility.GetLastRect();
         EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
 
-        bool returnValue = Event.current.type == EventType.mouseDown && rect.Contains(Event.current.mousePosition);
+        bool returnValue = Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition);
 
         GUILayout.Space(space);
 
