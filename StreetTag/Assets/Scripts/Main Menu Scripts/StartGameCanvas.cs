@@ -13,12 +13,4 @@ public class StartGameCanvas : MonoBehaviour {
 	void Update () {
 		
 	}
-
-	public void OpenStartGameCanvas() {
-		this.gameObject.SetActive (true);
-	}
-
-	public void CloseStartGameCanvas() {
-		this.gameObject.SetActive (false);
-	}
 }
