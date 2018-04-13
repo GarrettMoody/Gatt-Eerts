@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -29,6 +29,9 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
     /// </summary>
     public Action<OnlineMapsTile, Material> OnDrawTile;
 
+    /// <summary>
+    /// This event is occurs when the vertices of the marker is generated.
+    /// </summary>
     public Action<OnlineMapsMarker, List<Vector3>, int> OnGenerateMarkerVertices;
 
     /// <summary>
@@ -61,6 +64,9 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
     /// </summary>
     public Action OnMeshUpdated;
 
+    /// <summary>
+    /// This event occurs when marker mesh generation is completed.
+    /// </summary>
     public Action<Mesh, Renderer> OnSetMarkersMesh;
 
     /// <summary>
@@ -204,11 +210,11 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
     /// </summary>
     public float yScaleValue;
 
+    [SerializeField]
+    private bool _mipmapForTiles = false;
+
     private bool _useElevation;
-
     private OnlineMapsVector2i _bufferPosition;
-
-    [NonSerialized]
     private OnlineMapsBingMapsElevation elevationRequest;
     private float elevationRequestX1;
     private float elevationRequestY1;
@@ -222,6 +228,7 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
     private float elevationW;
     private float elevationH;
     private MeshCollider meshCollider;
+
     private bool ignoreGetElevation;
     private Mesh tilesetMesh;
     private int[] triangles;
@@ -280,6 +287,12 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         }
     }
 
+    public override bool mipmapForTiles
+    {
+        get { return _mipmapForTiles; }
+        set { _mipmapForTiles = value; }
+    }
+
     /// <summary>
     /// Mode of smooth zoom.
     /// </summary>
@@ -288,6 +301,20 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
     {
         get { return (OnlineMapsSmoothZoomMode)(int)zoomMode; }
         set { zoomMode = (OnlineMapsZoomMode) (int) value; }
+    }
+
+    /// <summary>
+    /// Cancels the current request for downloading elevation data.
+    /// </summary>
+    public void CancelCurrentElevationRequest()
+    {
+        waitSetElevationData = false;
+        ignoreGetElevation = false;
+        if (elevationRequest != null)
+        {
+            elevationRequest.Destroy();
+            elevationRequest = null;
+        }
     }
 
     public override void Clear2DMarkerInstances(OnlineMapsMarker2DMode mode)
@@ -314,6 +341,8 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         if (lockYScale) return yScaleValue;
 
         Vector2 realDistance = OnlineMapsUtils.DistanceBetweenPoints(topLeftPosition, bottomRightPosition);
+        realDistance.x = realDistance.x / map.tilesetSize.x * map.width;
+        realDistance.y = realDistance.y / map.tilesetSize.y * map.height;
         return Mathf.Min(map.width / realDistance.x, map.height / realDistance.y) / 1000;
     }
 
@@ -323,20 +352,9 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
 
         double dx, dy;
         OnlineMapsUtils.DistanceBetweenPoints(tlx, tly, brx, bry, out dx, out dy);
-        dx = dx / map.tilesetSize.x * 1024;
-        dy = dy / map.tilesetSize.y * 1024;
+        dx = dx / map.tilesetSize.x * map.width;
+        dy = dy / map.tilesetSize.y * map.height;
         return (float)Math.Min(map.width / dx, map.height / dy) / 1000;
-    }
-
-    public override Vector2 GetCoords(Vector2 position)
-    {
-        if (!HitTest(position)) return Vector2.zero;
-
-        RaycastHit hit;
-        if (!cl.Raycast(activeCamera.ScreenPointToRay(position), out hit, OnlineMapsUtils.maxRaycastDistance))
-            return Vector2.zero;
-
-        return GetCoordsByWorldPosition(hit.point);
     }
 
     public override bool GetCoords(out double lng, out double lat, Vector2 position)
@@ -408,7 +426,10 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         return true;
     }
 
-    private void GetElevation()
+    /// <summary>
+    /// Starts downloading of the new elevation data for the current area.
+    /// </summary>
+    public void GetElevation()
     {
         ignoreGetElevation = true;
 
@@ -531,6 +552,27 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         return marker;
     }
 
+    public override Vector2 GetScreenPosition(double lng, double lat)
+    {
+        double px, py;
+        GetPosition(lng, lat, out px, out py);
+        px /= map.width;
+        py /= map.height;
+        Vector3 worldPos = new Vector3();
+
+        double cpx = -map.tilesetSize.x * px;
+        double cpy = map.tilesetSize.y * py;
+
+        double tlx, tly, brx, bry;
+        map.GetCorners(out tlx, out tly, out brx, out bry);
+        float elevationScale = GetBestElevationYScale(tlx, tly, brx, bry);
+        float elevation = GetElevationValue(cpx, cpy, elevationScale, tlx, tly, brx, bry);
+        worldPos = transform.position + transform.rotation * new Vector3((float)(cpx * transform.lossyScale.x), elevation * transform.lossyScale.y, (float)(cpy * transform.lossyScale.z));
+
+        Camera cam = activeCamera ?? Camera.main;
+        return cam.WorldToScreenPoint(worldPos);
+    }
+
     /// <summary>
     /// Converts geographical coordinates to position in world space.
     /// </summary>
@@ -583,7 +625,7 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         float px = -mapPosition.x / map.tilesetWidth * map.tilesetSize.x;
         float pz = mapPosition.y / map.tilesetHeight * map.tilesetSize.y;
 
-        float y = GetElevationValue(-mapPosition.x, mapPosition.y, GetBestElevationYScale(topLeftPosition, bottomRightPosition), topLeftPosition, bottomRightPosition);
+        float y = GetElevationValue(px, pz, GetBestElevationYScale(topLeftPosition, bottomRightPosition), topLeftPosition, bottomRightPosition);
 
         Vector3 offset = transform.rotation * new Vector3(px, y, pz);
         offset.Scale(map.transform.lossyScale);
@@ -607,7 +649,7 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         float px = -mapPosition.x / map.tilesetWidth * map.tilesetSize.x;
         float pz = mapPosition.y / map.tilesetHeight * map.tilesetSize.y;
 
-        float y = GetElevationValue(-mapPosition.x, mapPosition.y, GetBestElevationYScale(tlx, tly, brx, bry), tlx, tly, brx, bry);
+        float y = GetElevationValue(px, pz, GetBestElevationYScale(tlx, tly, brx, bry), tlx, tly, brx, bry);
 
         Vector3 offset = transform.rotation * new Vector3(px, y, pz);
         offset.Scale(map.transform.lossyScale);
@@ -639,15 +681,6 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         offset.Scale(map.transform.lossyScale);
 
         return map.transform.position + offset;
-    }
-
-    protected override bool HitTest()
-    {
-#if NGUI
-        if (UICamera.Raycast(GetInputPosition())) return false;
-#endif
-        RaycastHit hit;
-        return cl.Raycast(activeCamera.ScreenPointToRay(GetInputPosition()), out hit, OnlineMapsUtils.maxRaycastDistance);
     }
 
     protected override bool HitTest(Vector2 position)
@@ -760,6 +793,8 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
             boxCollider.center = new Vector3(-map.tilesetSize.x / 2, 0, map.tilesetSize.y / 2);
             boxCollider.size = new Vector3(map.tilesetSize.x, 0, map.tilesetSize.y);
         }
+
+        firstUpdate = false;
 
         bool isIgnore = ignoreGetElevation;
         ignoreGetElevation = true;
@@ -965,7 +1000,7 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         }
         catch (Exception exception)
         {
-            Debug.Log(exception.Message);
+            Debug.Log(exception.Message + "\n" + exception.StackTrace);
             if (OnElevationFails != null) OnElevationFails(exception.Message);
         }
     }
@@ -1090,7 +1125,7 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
 
         ReinitMapMesh(w, h, subMeshVX, subMeshVZ);
 
-        map.UpdateBorders();
+        map.UpdateCorners();
         map.Redraw();
     }
 
@@ -1240,6 +1275,13 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         if (OnSetMarkersMesh != null) OnSetMarkersMesh(markersMesh, markersRenderer);
     }
 
+    /// <summary>
+    /// Starts to download elevations.
+    /// </summary>
+    /// <param name="sx">Left longitude</param>
+    /// <param name="sy">Top latitude</param>
+    /// <param name="ex">Right longitude</param>
+    /// <param name="ey">Bottom latitude</param>
     public void StartDownloadElevation(double sx, double sy, double ex, double ey)
     {
         elevationRequest = OnlineMapsBingMapsElevation.GetElevationByBounds(bingAPI, sx, sy, ex, ey, 32, 32);
@@ -1559,6 +1601,7 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         OnlineMapsTile.GetTile(zoom, bx, by, out tile);
 
         OnlineMapsTile currentTile = tile;
+        if (currentTile != null && currentTile.status != OnlineMapsTileStatus.loaded) currentTile = null;
         Vector2 offset = Vector2.zero;
         float scale = 1;
         int z = zoom;
@@ -1660,7 +1703,7 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
                 else if (OnlineMapsTile.emptyColorTexture != null) tileTexture = OnlineMapsTile.emptyColorTexture;
                 else
                 {
-                    tileTexture = OnlineMapsTile.emptyColorTexture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
+                    tileTexture = OnlineMapsTile.emptyColorTexture = new Texture2D(1, 1, TextureFormat.ARGB32, mipmapForTiles);
                     tileTexture.name = "Empty Texture";
                     OnlineMapsTile.emptyColorTexture.SetPixel(0, 0, map.emptyColor);
                     OnlineMapsTile.emptyColorTexture.Apply(false);
@@ -1708,7 +1751,7 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
                         }
                         if (currentTile.overlayFrontTexture == null)
                         {
-                            currentTile.overlayFrontTexture = new Texture2D(OnlineMapsUtils.tileSize, OnlineMapsUtils.tileSize, TextureFormat.ARGB32, false);
+                            currentTile.overlayFrontTexture = new Texture2D(OnlineMapsUtils.tileSize, OnlineMapsUtils.tileSize, TextureFormat.ARGB32, mipmapForTiles);
                             currentTile.overlayFrontTexture.wrapMode = TextureWrapMode.Clamp;
                         }
                         currentTile.overlayFrontTexture.SetPixels32(overlayFrontBuffer);
@@ -1750,10 +1793,10 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
 
         int zoom = map.buffer.apiZoom;
         int maxX = 1 << zoom;
-        int maxX2 = maxX / 2;
+        //double maxX2 = maxX * 0.75;
 
-        double px, py;
-        map.projection.CoordinatesToTile(tlx, tly, zoom, out px, out py);
+        double tx, ty;
+        map.projection.CoordinatesToTile(tlx, tly, zoom, out tx, out ty);
 
         float yScale = GetBestElevationYScale(tlx, tly, brx, bry);
 
@@ -1789,11 +1832,9 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
 
                 bool a = my > tly || 
                          my < bry ||
-                         (
-                            (mx < tlx || mx > brx) &&
-                            (mx + 360 < tlx || mx + 360 > brx) &&
-                            (mx - 360 < tlx || mx - 360 > brx)
-                         );
+                         (mx < tlx || mx > brx) &&
+                         (mx + 360 < tlx || mx + 360 > brx) &&
+                         (mx - 360 < tlx || mx - 360 > brx);
                 if (a) return false;
             }
 
@@ -1866,11 +1907,13 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
             Vector2 offset = marker.GetAlignOffset();
             offset *= marker.scale;
 
-            fx = fx - px;
-            if (fx < -maxX2) fx += maxX;
-            else if (fx > maxX2) fx -= maxX;
+            fx = fx - tx;
+
+            if (fx < 0) fx += maxX;
+            else if (fx > maxX) fx -= maxX;
+
             fx = fx * OnlineMapsUtils.tileSize - offset.x;
-            fy = (fy - py) * OnlineMapsUtils.tileSize - offset.y;
+            fy = (fy - ty) * OnlineMapsUtils.tileSize - offset.y;
 
             if (marker.texture == null)
             {
@@ -2083,6 +2126,9 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBase3D
         center
     }
 
+    /// <summary>
+    /// Type calculation of the bottom point of the map mesh.
+    /// </summary>
     public enum ElevationBottomMode
     {
         zero,

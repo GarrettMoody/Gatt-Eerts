@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2017      */
+/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using UnityEngine;
@@ -7,9 +7,12 @@ using UnityEngine;
 /// Class control the map for the GUITexture.
 /// </summary>
 [AddComponentMenu("Infinity Code/Online Maps/Controls/GUITexture")]
+#if !UNITY_2017_2_OR_NEWER || ONLINEMAPS_GUITEXTURE
 [RequireComponent(typeof(GUITexture))]
+#endif
 public class OnlineMapsGUITextureControl : OnlineMapsControlBase2D
 {
+#if !UNITY_2017_2_OR_NEWER || ONLINEMAPS_GUITEXTURE
     private GUITexture _gTexture;
 
     /// <summary>
@@ -20,6 +23,9 @@ public class OnlineMapsGUITextureControl : OnlineMapsControlBase2D
         get { return OnlineMapsControlBase.instance as OnlineMapsGUITextureControl; }
     }
 
+    /// <summary>
+    /// Reference to GUITexture
+    /// </summary>
     public GUITexture gTexture
     {
         get
@@ -34,21 +40,6 @@ public class OnlineMapsGUITextureControl : OnlineMapsControlBase2D
             }
             return _gTexture;
         }
-    }
-
-    public override Vector2 GetCoords(Vector2 position)
-    {
-        Rect rect = screenRect;
-        int countX = map.texture.width / OnlineMapsUtils.tileSize;
-        int countY = map.texture.height / OnlineMapsUtils.tileSize;
-        double px, py;
-        map.GetTilePosition(out px, out py);
-        float rx = (rect.center.x - position.x) / rect.width * 2;
-        float ry = (rect.center.y - position.y) / rect.height * 2;
-        px -= countX / 2f * rx;
-        py += countY / 2f * ry;
-        map.projection.TileToCoordinates(px, py, map.zoom, out px, out py);
-        return new Vector2((float)px, (float)py);
     }
 
     public override bool GetCoords(out double lng, out double lat, Vector2 position)
@@ -71,11 +62,6 @@ public class OnlineMapsGUITextureControl : OnlineMapsControlBase2D
         return gTexture.GetScreenRect();
     }
 
-    protected override bool HitTest()
-    {
-        return gTexture.HitTest(GetInputPosition());
-    }
-
     protected override bool HitTest(Vector2 position)
     {
         return gTexture.HitTest(position);
@@ -95,4 +81,11 @@ public class OnlineMapsGUITextureControl : OnlineMapsControlBase2D
         base.SetTexture(texture);
         gTexture.texture = texture;
     }
+#else
+    public override bool GetCoords(out double lng, out double lat, Vector2 position)
+    {
+        lng = lat = 0;
+        return false;
+    }
+#endif
 }

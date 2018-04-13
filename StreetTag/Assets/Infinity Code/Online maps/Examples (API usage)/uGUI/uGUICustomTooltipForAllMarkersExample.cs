@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using UnityEngine;
@@ -47,7 +47,8 @@ namespace InfinityCode.OnlineMapsExamples
                 Vector2 screenPosition = OnlineMapsControlBase.instance.GetScreenPosition(tooltipMarker.position);
                 screenPosition.y += tooltipMarker.height;
                 Vector2 point;
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(container.transform as RectTransform, screenPosition, null, out point);
+                Camera cam = container.renderMode == RenderMode.ScreenSpaceOverlay ? null : container.worldCamera;
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(container.transform as RectTransform, screenPosition, cam, out point);
                 (tooltip.transform as RectTransform).localPosition = point;
                 tooltip.GetComponentInChildren<Text>().text = tooltipMarker.label;
 

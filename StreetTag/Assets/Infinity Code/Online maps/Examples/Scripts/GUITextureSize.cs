@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using UnityEngine;
@@ -8,6 +8,7 @@ namespace InfinityCode.OnlineMapsDemos
     [AddComponentMenu("Infinity Code/Online Maps/Demos/GUITextureSize")]
     public class GUITextureSize : MonoBehaviour
     {
+#if !UNITY_2017_2_OR_NEWER || ONLINEMAPS_GUITEXTURE
         private int screenWidth;
         private int screenHeight;
 
@@ -52,5 +53,6 @@ namespace InfinityCode.OnlineMapsDemos
 
             gt.pixelInset = pi;
         }
+#endif
     }
 }

@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -215,11 +215,22 @@ public class OnlineMapsMarkerBase: IOnlineMapsInteractiveElement
         lat = latitude;
     }
 
+    /// <summary>
+    /// Get tile position of the marker
+    /// </summary>
+    /// <param name="px">Tile X</param>
+    /// <param name="py">Tile Y</param>
     public void GetTilePosition(out double px, out double py)
     {
         map.projection.CoordinatesToTile(longitude, latitude, map.zoom, out px, out py);
     }
 
+    /// <summary>
+    /// Get tile position of the marker
+    /// </summary>
+    /// <param name="px">Tile X</param>
+    /// <param name="py">Tile Y</param>
+    /// <param name="zoom">Zoom</param>
     public void GetTilePosition(out double px, out double py, int zoom)
     {
         map.projection.CoordinatesToTile(longitude, latitude, zoom, out px, out py);
@@ -281,6 +292,9 @@ public class OnlineMapsMarkerBase: IOnlineMapsInteractiveElement
         OnPress += OnMarkerPress;
     }
 
+    /// <summary>
+    /// Update of marker instance.
+    /// </summary>
     public virtual void Update()
     {
         

@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 #if !UNITY_4_6 && !UNITY_4_7 && !UNITY_5_0 && !UNITY_5_1 && !UNITY_5_2
@@ -33,6 +33,7 @@ public class OnlineMapsTilesetControlEditor : OnlineMapsTextureControlEditor
     private SerializedProperty pElevationZoomRange;
     private SerializedProperty pBingAPI;
     private SerializedProperty pElevationBottomMode;
+    private SerializedProperty pMipmapForTiles;
 
     protected override void CacheSerializedProperties()
     {
@@ -51,6 +52,7 @@ public class OnlineMapsTilesetControlEditor : OnlineMapsTextureControlEditor
         pElevationZoomRange = serializedObject.FindProperty("elevationZoomRange");
         pElevationBottomMode = serializedObject.FindProperty("elevationBottomMode");
         pBingAPI = serializedObject.FindProperty("bingAPI");
+        pMipmapForTiles = serializedObject.FindProperty("_mipmapForTiles");
     }
 
     private void CheckCameraDistance(OnlineMaps map)
@@ -130,6 +132,7 @@ public class OnlineMapsTilesetControlEditor : OnlineMapsTextureControlEditor
             EditorGUILayout.PropertyField(pTilesetShader);
             EditorGUILayout.PropertyField(pMarkerShader);
             EditorGUILayout.PropertyField(pDrawingShader);
+            EditorGUILayout.PropertyField(pMipmapForTiles);
         }
 
         EditorGUILayout.EndVertical();

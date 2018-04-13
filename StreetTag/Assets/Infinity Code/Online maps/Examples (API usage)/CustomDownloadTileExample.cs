@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using UnityEngine;
@@ -24,7 +24,7 @@ namespace InfinityCode.OnlineMapsExamples
 
         private void OnStartDownloadTile(OnlineMapsTile tile)
         {
-            Texture tileTexture = new Texture();
+            Texture2D tileTexture = new Texture2D(256, 256);
 
             // Here your code to load tile texture from any source.
 

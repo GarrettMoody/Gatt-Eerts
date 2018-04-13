@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2016      */
+/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -147,6 +147,7 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
     protected bool lockClick;
     protected bool waitZeroTouches = false;
 
+    private IOnlineMapsInteractiveElement activeElement;
     private OnlineMapsMarkerBase _dragMarker;
     private long[] lastClickTimes = {0, 0};
     private Vector2 pressPoint;
@@ -164,17 +165,17 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
         get { return _instance; }
     }
 
-    protected virtual bool allowTouchZoom
-    {
-        get { return true; }
-    }
-
     /// <summary>
     /// Indicates whether it is possible to get the screen coordinates store. True - for 2D map, false - for the 3D map.
     /// </summary>
     public virtual bool allowMarkerScreenRect
     {
         get { return false; }
+    }
+
+    protected virtual bool allowTouchZoom
+    {
+        get { return true; }
     }
 
     /// <summary>
@@ -188,6 +189,15 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
             _dragMarker = value;
             if (_dragMarker != null) UpdateLastPosition();
         }
+    }
+
+    /// <summary>
+    /// Mipmap for tiles.
+    /// </summary>
+    public virtual bool mipmapForTiles
+    {
+        get { return false; }
+        set { throw new Exception("This control does not support mipmap for tiles.");}
     }
 
     /// <summary>
@@ -266,7 +276,7 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
     /// Returns the geographical coordinates of the location where the cursor is.
     /// </summary>
     /// <returns>Geographical coordinates</returns>
-    public virtual Vector2 GetCoords()
+    public Vector2 GetCoords()
     {
         return GetCoords(GetInputPosition());
     }
@@ -276,9 +286,11 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
     /// </summary>
     /// <param name="position">Screen coordinates</param>
     /// <returns>Geographical coordinates</returns>
-    public virtual Vector2 GetCoords(Vector2 position)
+    public Vector2 GetCoords(Vector2 position)
     {
-        return Vector2.zero;
+        double lng, lat;
+        GetCoords(out lng, out lat, position);
+        return new Vector2((float)lng, (float)lat);
     }
 
     /// <summary>
@@ -287,7 +299,7 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
     /// <param name="lng">Longitude</param>
     /// <param name="lat">Latitude</param>
     /// <returns>True - success, False - otherwise.</returns>
-    public virtual bool GetCoords(out double lng, out double lat)
+    public bool GetCoords(out double lng, out double lat)
     {
         return GetCoords(out lng, out lat, GetInputPosition());
     }
@@ -299,10 +311,7 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
     /// <param name="lat">Latitude</param>
     /// <param name="position">Screen coordinates</param>
     /// <returns>True - success, False - otherwise.</returns>
-    public virtual bool GetCoords(out double lng, out double lat, Vector2 position)
-    {
-        throw new NotImplementedException();
-    }
+    public abstract bool GetCoords(out double lng, out double lat, Vector2 position);
 
     /// <summary>
     /// Returns the current cursor position.
@@ -315,8 +324,15 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
         return Input.mousePosition;
     }
 
+    /// <summary>
+    /// Gets interactive element by screen position.
+    /// </summary>
+    /// <param name="screenPosition">Screen position</param>
+    /// <returns>Interactive element</returns>
     public virtual IOnlineMapsInteractiveElement GetInteractiveElement(Vector2 screenPosition)
     {
+        if (IsCursorOnUIElement(screenPosition)) return null;
+
         OnlineMapsMarker marker = map.GetMarkerFromScreen(screenPosition);
         if (marker != null) return marker;
 
@@ -379,15 +395,9 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
     /// </summary>
     /// <param name="coords">Geographical coordinate (X - longitude, Y - latitude)</param>
     /// <returns>Screen space position</returns>
-    public virtual Vector2 GetScreenPosition(Vector2 coords)
+    public Vector2 GetScreenPosition(Vector2 coords)
     {
-        Vector2 mapPos = GetPosition(coords);
-        mapPos.x /= map.width;
-        mapPos.y /= map.height;
-        Rect mapRect = GetRect();
-        mapPos.x = mapRect.x + mapRect.width * mapPos.x;
-        mapPos.y = mapRect.y + mapRect.height - mapRect.height * mapPos.y;
-        return mapPos;
+        return GetScreenPosition(coords.x, coords.y);
     }
 
     /// <summary>
@@ -431,11 +441,16 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
     /// Checks whether the cursor over the map.
     /// </summary>
     /// <returns>True - if the cursor over the map, false - if not.</returns>
-    protected virtual bool HitTest()
+    protected bool HitTest()
     {
-        return true;
+        return HitTest(GetInputPosition());
     }
 
+    /// <summary>
+    /// Checks whether the cursor over the map.
+    /// </summary>
+    /// <param name="position">Screen position</param>
+    /// <returns>True - if the cursor over the map, false - if not.</returns>
     protected virtual bool HitTest(Vector2 position)
     {
         return true;
@@ -455,6 +470,24 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
     public void InvokeBaseRelease()
     {
         OnMapBaseRelease();
+    }
+
+    protected bool IsCursorOnUIElement(Vector2 position)
+    {
+        if (!map.notInteractUnderGUI) return false;
+#if !IGUI && ((!UNITY_ANDROID && !UNITY_IOS) || UNITY_EDITOR)
+        if (GUIUtility.hotControl != 0) return true;
+#endif
+        if (EventSystem.current != null)
+        {
+            PointerEventData pe = new PointerEventData(EventSystem.current);
+            pe.position = position;
+            List<RaycastResult> hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(pe, hits);
+            if (hits.Count > 0 && hits[0].gameObject != gameObject) return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -543,20 +576,9 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
         dragMarker = null;
         if (!HitTest()) return;
 
-#if !IGUI && ((!UNITY_ANDROID && !UNITY_IOS) || UNITY_EDITOR)
-        if (map.notInteractUnderGUI && GUIUtility.hotControl != 0) return;
-#endif
-
         Vector2 inputPosition = GetInputPosition();
 
-        if (EventSystem.current != null)
-        {
-            PointerEventData pe = new PointerEventData(EventSystem.current);
-            pe.position = inputPosition;
-            List<RaycastResult> hits = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(pe, hits);
-            if (hits.Count > 0 && hits[0].gameObject != gameObject) return;
-        }
+        if (IsCursorOnUIElement(inputPosition)) return;
 
         if (OnMapPress != null) OnMapPress();
 
@@ -604,6 +626,8 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
 
         longPressEnumenator = WaitLongPress();
         StartCoroutine(longPressEnumenator);
+
+        activeElement = interactiveElement;
 
         if (allowUserControl) OnlineMaps.isUserControl = true;
     }
@@ -653,14 +677,35 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
             map.tooltip = null;
         }
 
+        bool isClicked = false;
+
         if (marker != null)
         {
             if (marker.OnRelease != null) marker.OnRelease(marker);
-            if (isClick && marker.OnClick != null) marker.OnClick(marker);
+            if (isClick && marker.OnClick != null)
+            {
+                marker.OnClick(marker);
+                isClicked = true;
+            }
         }
         else if (drawingElement != null)
         {
             if (drawingElement.OnRelease != null) drawingElement.OnRelease(drawingElement);
+        }
+
+        if (activeElement != null && activeElement != interactiveElement)
+        {
+            if (activeElement is OnlineMapsMarkerBase)
+            {
+                OnlineMapsMarkerBase m = activeElement as OnlineMapsMarkerBase;
+                if (m.OnRelease != null) m.OnRelease(m);
+            }
+            else if (activeElement is OnlineMapsDrawingElement)
+            {
+                OnlineMapsDrawingElement d = activeElement as OnlineMapsDrawingElement;
+                if (d.OnRelease != null) d.OnRelease(d);
+            }
+            activeElement = null;
         }
 
         if (isClick && DateTime.Now.Ticks - lastClickTimes[0] < 5000000)
@@ -683,10 +728,10 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
             lastClickTimes[0] = 0;
             lastClickTimes[1] = 0;
         }
-        else if (isClick)
+        else if (isClick && !isClicked)
         {
             if (drawingElement != null && drawingElement.OnClick != null) drawingElement.OnClick(drawingElement);
-            if (OnMapClick != null) OnMapClick();
+            else if (OnMapClick != null) OnMapClick();
         }
 
         if (map.bufferStatus == OnlineMapsBufferStatus.wait) map.needRedraw = true;
@@ -865,29 +910,10 @@ public abstract class OnlineMapsControlBase : MonoBehaviour
         if (!allowUserControl) return;
         if (!HitTest()) return;
 
-#if !IGUI && ((!UNITY_ANDROID && !UNITY_IOS) || UNITY_EDITOR)
-        if (map.notInteractUnderGUI && GUIUtility.hotControl != 0) return;
-#endif
-
         Vector2 inputPosition = GetInputPosition();
 
-        if (EventSystem.current != null)
-        {
-            PointerEventData pe = new PointerEventData(EventSystem.current);
-            pe.position = inputPosition;
-            List<RaycastResult> hits = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(pe, hits);
-            if (hits.Count > 0)
-            {
-                if (OnValidateMouseWheel != null)
-                {
-                    if (!OnValidateMouseWheel(hits[0].gameObject)) return;
-                }
-                else if (hits[0].gameObject != gameObject) return;
-            }
-        }
-
         if (inputPosition.x <= 0 || inputPosition.x >= Screen.width || inputPosition.y <= 0 || inputPosition.y >= Screen.height) return;
+        if (IsCursorOnUIElement(inputPosition)) return;
 
         float wheel = Input.GetAxis("Mouse ScrollWheel");
         if (Math.Abs(wheel) < float.Epsilon) return;

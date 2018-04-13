@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -129,8 +129,10 @@ public class OnlineMapsMarker : OnlineMapsMarkerBase
         get { return _scale; }
         set
         {
+            if (Math.Abs(_scale - value) < float.Epsilon) return;
+
             _scale = value;
-            UpdateRotatedBuffer();
+            if (Application.isPlaying) UpdateRotatedBuffer();
         }
     }
 
@@ -220,6 +222,12 @@ public class OnlineMapsMarker : OnlineMapsMarkerBase
         return GetAlignedPosition(pos.x, pos.y);
     }
 
+    /// <summary>
+    /// Gets aligned position.
+    /// </summary>
+    /// <param name="px">Buffer position X</param>
+    /// <param name="py">Buffer position Y</param>
+    /// <returns>The aligned buffer position.</returns>
     public OnlineMapsVector2i GetAlignedPosition(int px, int py)
     {
         OnlineMapsVector2i offset = GetAlignOffset();
@@ -412,12 +420,14 @@ public class OnlineMapsMarker : OnlineMapsMarkerBase
         _width = Mathf.RoundToInt(maxX - minX + 0.5f);
         _height = Mathf.RoundToInt(maxZ - minZ + 0.5f);
 
-        Color emptyColor = new Color(0, 0, 0, 0);
+        Color32 emptyColor = new Color(0, 0, 0, 0);
 
         if (_rotatedColors == null || _rotatedColors.Length != _width * _height) _rotatedColors = new Color32[_width * _height];
 
         int tw = _textureWidth;
         int th = _textureHeight;
+
+        Color32 c1, c2, c3, c4;
 
         for (int y = 0; y < _height; y++)
         {
@@ -434,16 +444,22 @@ public class OnlineMapsMarker : OnlineMapsMarkerBase
 
                 if (ix + 1 >= 0 && ix < tw && iz + 1 >= 0 && iz < th)
                 {
-                    Color[] clrs = { emptyColor, emptyColor, emptyColor, emptyColor };
-                    if (ix >= 0 && iz >= 0) clrs[0] = _colors[iz * tw + ix];
-                    if (ix + 1 < tw && iz >= 0) clrs[1] = _colors[iz * tw + ix + 1];
-                    if (ix >= 0 && iz + 1 < th) clrs[2] = _colors[(iz + 1) * tw + ix];
-                    if (ix + 1 < tw && iz + 1 < th) clrs[3] = _colors[(iz + 1) * tw + ix + 1];
+                    if (ix >= 0 && iz >= 0) c1 = _colors[iz * tw + ix];
+                    else c1 = emptyColor;
 
-                    clrs[0] = Color.Lerp(clrs[0], clrs[1], fx);
-                    clrs[2] = Color.Lerp(clrs[2], clrs[3], fx);
+                    if (ix + 1 < tw && iz >= 0) c2 = _colors[iz * tw + ix + 1];
+                    else c2 = emptyColor;
 
-                    _rotatedColors[cy + x] = Color.Lerp(clrs[0], clrs[2], fz);
+                    if (ix >= 0 && iz + 1 < th) c3 = _colors[(iz + 1) * tw + ix];
+                    else c3 = emptyColor;
+
+                    if (ix + 1 < tw && iz + 1 < th) c4 = _colors[(iz + 1) * tw + ix + 1];
+                    else c4 = emptyColor;
+
+                    c1 = Color32.Lerp(c1, c2, fx);
+                    c3 = Color32.Lerp(c3, c4, fx);
+
+                    _rotatedColors[cy + x] = Color32.Lerp(c1, c3, fz);
                 }
                 else _rotatedColors[cy + x] = emptyColor;
             }

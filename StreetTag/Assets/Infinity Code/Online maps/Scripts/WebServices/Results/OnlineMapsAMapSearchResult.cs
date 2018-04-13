@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2017      */
+/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 /// <summary>

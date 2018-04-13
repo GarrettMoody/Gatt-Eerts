@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -13,6 +13,40 @@ public static class OnlineMapsReflectionHelper
 {
     private const BindingFlags DefaultLookup = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
 
+    /// <summary>
+    /// Checks whether the type is anonymous.
+    /// </summary>
+    /// <param name="type">Type</param>
+    /// <returns>True - type is anonymous, false - otherwise</returns>
+    public static bool CheckIfAnonymousType(Type type)
+    {
+        if (type == null) throw new ArgumentNullException("type");
+
+        return IsGenericType(type)
+            && (type.Name.Contains("AnonymousType") || type.Name.Contains("AnonType"))
+            && (type.Name.StartsWith("<>") || type.Name.StartsWith("VB$"))
+            && (GetAttributes(type) & TypeAttributes.NotPublic) == TypeAttributes.NotPublic;
+    }
+
+    /// <summary>
+    /// Gets the attributes associated with the Type.
+    /// </summary>
+    /// <param name="type">Type</param>
+    /// <returns>Attributes of type.</returns>
+    public static TypeAttributes GetAttributes(Type type)
+    {
+#if !NETFX_CORE
+        return type.Attributes;
+#else
+        return type.GetTypeInfo().Attributes;
+#endif
+    }
+
+    /// <summary>
+    /// Get the OnlineMapsOpenRouteService.Description attribute from Enum.
+    /// </summary>
+    /// <param name="value">Enum value</param>
+    /// <returns>OnlineMapsOpenRouteService.Description attribute</returns>
     public static string GetEnumDescription(Enum value)
     {
         FieldInfo fi = value.GetType().GetField(value.ToString());

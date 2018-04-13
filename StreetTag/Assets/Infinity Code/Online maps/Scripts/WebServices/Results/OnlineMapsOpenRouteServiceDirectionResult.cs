@@ -1,3 +1,6 @@
+/*     INFINITY CODE 2013-2018      */
+/*   http://www.infinity-code.com   */
+
 using System.Collections;
 using System.Collections.Generic;
 

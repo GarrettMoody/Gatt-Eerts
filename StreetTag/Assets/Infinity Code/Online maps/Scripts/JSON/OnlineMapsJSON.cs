@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -655,6 +655,11 @@ public class OnlineMapsJSON
         throw new Exception("Unrecognized token at index" + index);
     }
 
+    /// <summary>
+    /// Serializes an object to JSON.
+    /// </summary>
+    /// <param name="obj">Object</param>
+    /// <returns>JSON</returns>
     public static OnlineMapsJSONItem Serialize(object obj)
     {
 #if !UNITY_WP_8_1 || UNITY_EDITOR
@@ -690,8 +695,15 @@ public class OnlineMapsJSON
 
         OnlineMapsJSONObject o = new OnlineMapsJSONObject();
         Type type = obj.GetType();
-        IEnumerable<FieldInfo> fields = OnlineMapsReflectionHelper.GetFields(type, BindingFlags.Instance | BindingFlags.Public);
-        foreach (FieldInfo field in fields) o.Add(field.Name, Serialize(field.GetValue(obj)));
+        BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public;
+        if (OnlineMapsReflectionHelper.CheckIfAnonymousType(type)) bindingFlags |= BindingFlags.NonPublic;
+        IEnumerable<FieldInfo> fields = OnlineMapsReflectionHelper.GetFields(type, bindingFlags);
+        foreach (FieldInfo field in fields)
+        {
+            string fieldName = field.Name;
+            if (field.Attributes == (FieldAttributes.Private | FieldAttributes.InitOnly)) fieldName = fieldName.Trim('<', '>');
+            o.Add(fieldName, Serialize(field.GetValue(obj)));
+        }
         return o;        
     }
 
