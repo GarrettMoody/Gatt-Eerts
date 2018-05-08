@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2017      */
+/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System.Collections.Generic;
@@ -346,6 +346,11 @@ public class OnlineMapsGoogleDirectionsResult
         /// This polyline is an approximate (smoothed) path of the resulting directions.
         /// </summary>
         public Vector2[] overview_polyline;
+
+        /// <summary>
+        /// Single points object that holds an encoded polyline representation of the route. \n
+        /// This polyline is an approximate (smoothed) path of the resulting directions.
+        /// </summary>
         public OnlineMapsVector2d[] overview_polylineD;
 
         /// <summary>

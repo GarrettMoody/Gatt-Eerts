@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System.Collections.Generic;
@@ -43,11 +43,15 @@ namespace InfinityCode.OnlineMapsExamples
         {
             Debug.Log(response);
 
-            // Get the route steps.
-            List<OnlineMapsDirectionStep> steps = OnlineMapsDirectionStep.TryParseORS(response);
+            OnlineMapsOpenRouteServiceDirectionResult result = OnlineMapsOpenRouteService.GetDirectionResults(response);
+            if (result == null || result.routes.Length == 0)
+            {
+                Debug.Log("Open Route Service Directions failed.");
+                return;
+            }
 
-            // Get the route points.
-            List<Vector2> points = OnlineMapsDirectionStep.GetPoints(steps);
+            // Get the points of the first route.
+            List<OnlineMapsVector2d> points = result.routes[0].points;
 
             // Draw the route.
             OnlineMaps.instance.AddDrawingElement(new OnlineMapsDrawingLine(points, Color.red));

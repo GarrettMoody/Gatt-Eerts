@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -13,11 +13,16 @@ using UnityEngine;
 /// </summary>
 public class OnlineMapsTile
 {
+    public static object lockTiles = new object();
+
     /// <summary>
     /// Buffer default colors.
     /// </summary>
     public static Color32[] defaultColors;
 
+    /// <summary>
+    /// The texture that is used until the tile is loaded.
+    /// </summary>
     public static Texture2D emptyColorTexture;
 
     /// <summary>
@@ -57,6 +62,9 @@ public class OnlineMapsTile
     private static OnlineMaps map;
     private static List<OnlineMapsTile> unusedTiles;
 
+    /// <summary>
+    /// This event is called when the tile is disposed.
+    /// </summary>
     public Action<OnlineMapsTile> OnDisposed;
 
     /// <summary>
@@ -70,6 +78,9 @@ public class OnlineMapsTile
     /// </summary>
     public Vector2 bottomRight;
 
+    /// <summary>
+    /// This flag indicates whether the cache is checked for a tile.
+    /// </summary>
     public bool cacheChecked;
 
     /// <summary>
@@ -88,11 +99,19 @@ public class OnlineMapsTile
 
     public bool hasColors;
     public bool isMapTile;
+
+    /// <summary>
+    /// The unique tile key.
+    /// </summary>
     public ulong key;
+
+    /// <summary>
+    /// Labels is used in tile?
+    /// </summary>
     public bool labels;
 
     /// <summary>
-    /// Language used in tile
+    /// Language is used in tile?
     /// </summary>
     public string language;
 
@@ -201,6 +220,11 @@ public class OnlineMapsTile
             if (_colors != null) return _colors;
             return defaultColors;
         }
+        set
+        {
+            _colors = value;
+            hasColors = _colors != null;
+        }
     }
 
     /// <summary>
@@ -228,6 +252,9 @@ public class OnlineMapsTile
         set { _tiles = value; }
     }
 
+    /// <summary>
+    /// Dictionary of all tiles
+    /// </summary>
     public static Dictionary<ulong, OnlineMapsTile> dTiles
     {
         get
@@ -237,11 +264,17 @@ public class OnlineMapsTile
         }
     }
 
+    /// <summary>
+    /// The tile is blocked?
+    /// </summary>
     public bool isBlocked
     {
         get { return blockers != null && blockers.Count > 0; }
     }
 
+    /// <summary>
+    /// Provider of the traffic textures
+    /// </summary>
     public OnlineMapsTrafficProvider trafficProvider
     {
         get { return _trafficProvider; }
@@ -252,6 +285,9 @@ public class OnlineMapsTile
         }
     }
 
+    /// <summary>
+    ///  URL of the traffic texture
+    /// </summary>
     public string trafficURL
     {
         get
@@ -375,10 +411,14 @@ public class OnlineMapsTile
         blockers.Add(blocker);
     }
 
+    /// <summary>
+    /// Checks the size of the tile texture.
+    /// </summary>
+    /// <param name="texture">Tile texture</param>
     public void CheckTextureSize(Texture2D texture)
     {
         if (texture == null) return;
-        if (mapType.isCustom && (texture.width != 256 || texture.height != 256))
+        if (map.target == OnlineMapsTarget.texture && mapType.isCustom && (texture.width != 256 || texture.height != 256))
         {
             Debug.LogError(string.Format("Size tiles {0}x{1}. Expected to 256x256. Please check the URL.", texture.width, texture.height));
             status = OnlineMapsTileStatus.error;
@@ -427,7 +467,7 @@ public class OnlineMapsTile
         if (status == OnlineMapsTileStatus.disposed) return;
         status = OnlineMapsTileStatus.disposed;
 
-        lock (unusedTiles)
+        lock (lockTiles)
         {
             unusedTiles.Add(this);
         }
@@ -439,7 +479,7 @@ public class OnlineMapsTile
 
     private void Destroy()
     {
-        lock (tiles)
+        lock (lockTiles)
         {
             tiles.Remove(this);
         }
@@ -598,19 +638,19 @@ public class OnlineMapsTile
         else texture.LoadImage(bytes);
     }
 
+    /// <summary>
+    /// Marks the tile loaded.
+    /// </summary>
     public void MarkLoaded()
     {
-        bool fullLoaded = true;
+        if (OnAllTilesLoaded == null) return;
+
         foreach (OnlineMapsTile tile in tiles)
         {
-            if (tile.status != OnlineMapsTileStatus.loaded && tile.status != OnlineMapsTileStatus.error)
-            {
-                fullLoaded = false;
-                break;
-            }
+            if (tile.status != OnlineMapsTileStatus.loaded && tile.status != OnlineMapsTileStatus.error) return;
         }
 
-        if (fullLoaded && OnAllTilesLoaded != null) OnAllTilesLoaded();
+        OnAllTilesLoaded();
     }
 
     private void MergeColors()
@@ -696,7 +736,7 @@ public class OnlineMapsTile
     {
         if (unusedTiles == null) return;
 
-        lock (unusedTiles)
+        lock (lockTiles)
         {
             for (int i = 0; i < unusedTiles.Count; i++) unusedTiles[i].Destroy();
             unusedTiles.Clear();

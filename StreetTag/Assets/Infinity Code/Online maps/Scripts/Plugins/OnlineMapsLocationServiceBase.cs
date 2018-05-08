@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -18,8 +18,14 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
     /// </summary>
     public Action<float> OnCompassChanged;
 
+    /// <summary>
+    /// This event allows you to intercept receiving a GPS location.
+    /// </summary>
     public OnGetLocationDelegate OnGetLocation;
 
+    /// <summary>
+    /// This event is called when the IP location are found.
+    /// </summary>
     public Action OnFindLocationByIPComplete;
 
     /// <summary>
@@ -31,6 +37,11 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
     /// This event is called when the GPS is initialized (the first value is received) or location by IP is found.
     /// </summary>
     public Action OnLocationInited;
+
+    /// <summary>
+    /// This event called after map position restored when timeout "Restore After" expires.
+    /// </summary>
+    public Action OnPositionRestored;
 
     /// <summary>
     /// Update stop position when user input.
@@ -47,6 +58,9 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
     /// </summary>
     public bool createMarkerInUserPosition = false;
 
+    /// <summary>
+    /// Indicates whether to disable the emulator when used on the device.
+    /// </summary>
     public bool disableEmulatorInPublish = true;
 
     /// <summary>
@@ -67,6 +81,11 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
     /// Specifies whether to search for a location by IP.
     /// </summary>
     public bool findLocationByIP = false;
+
+    /// <summary>
+    /// Smooth rotation of the marker. This helps to bypass the jitter of the marker.
+    /// </summary>
+    public bool lerpCompassValueForMarker = true;
 
     /// <summary>
     /// Tooltip of the marker.
@@ -162,6 +181,9 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
         set { _baseInstance._marker = value; }
     }
 
+    /// <summary>
+    /// Is it allowed to update the position.
+    /// </summary>
     public bool allowUpdatePosition
     {
         get { return _allowUpdatePosition; }
@@ -181,6 +203,30 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
     {
         get { return _speed; }
     }
+
+    /// <summary>
+    /// Checks that the Location Service is running.
+    /// </summary>
+    /// <returns></returns>
+    public abstract bool IsLocationServiceRunning();
+
+    /// <summary>
+    /// Returns the current GPS location or emulator location.
+    /// </summary>
+    /// <param name="longitude">Longitude</param>
+    /// <param name="latitude">Latitude</param>
+    public void GetLocation(out float longitude, out float latitude)
+    {
+        longitude = position.x;
+        latitude = position.y;
+    }
+
+    /// <summary>
+    /// Returns the current GPS location from sensor.
+    /// </summary>
+    /// <param name="longitude">Longitude</param>
+    /// <param name="latitude">Latitude</param>
+    protected abstract void GetLocationFromSensor(out float longitude, out float latitude);
 
     private void OnChangePosition()
     {
@@ -272,6 +318,17 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Stops Location Service
+    /// </summary>
+    public abstract void StopLocationService();
+
+    /// <summary>
+    /// Try to start Location Service.
+    /// </summary>
+    /// <returns></returns>
+    public abstract bool TryStartLocationService();
+
     private void Update()
     {
         if (api == null)
@@ -315,7 +372,11 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
             if (useGPSEmulator) UpdatePositionFromEmulator(ref positionChanged);
             else UpdatePositionFromInput(ref positionChanged);
 
-            if (createMarkerInUserPosition && (positionChanged || compassChanged)) UpdateMarker();
+            if (createMarkerInUserPosition)
+            {
+                if (positionChanged || compassChanged) UpdateMarker();
+                UpdateMarkerRotation();
+            }
 
             if (positionChanged)
             {
@@ -337,6 +398,7 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
                 {
                     _allowUpdatePosition = true;
                     UpdatePosition();
+                    if (OnPositionRestored != null) OnPositionRestored();
                 }
             }
         }
@@ -361,8 +423,8 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
         float heading = Input.compass.trueHeading;
         float offset = trueHeading - heading;
 
-        if (offset > 360) offset -= 360;
-        else if (offset < -360) offset += 360;
+        if (offset > 180) offset -= 360;
+        else if (offset < -180) offset += 360;
 
         if (Mathf.Abs(offset) > compassThreshold)
         {
@@ -380,6 +442,7 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
             {
                 _marker = OnlineMaps.instance.AddMarker(position, marker2DTexture, markerTooltip);
                 (_marker as OnlineMapsMarker).align = marker2DAlign;
+                if (useCompassForMarker) (_marker as OnlineMapsMarker).rotation = trueHeading / 360;
             }
             else
             {
@@ -392,20 +455,36 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
                 }
                 _marker = control.AddMarker3D(position, marker3DPrefab);
                 _marker.label = markerTooltip;
+                if (useCompassForMarker) (_marker as OnlineMapsMarker3D).rotationY = trueHeading;
             }
         }
         else
         {
             _marker.position = position;
         }
+    }
 
-        if (useCompassForMarker)
+    private void UpdateMarkerRotation()
+    {
+        if (!useCompassForMarker || marker == null) return;
+
+        float value;
+        if (markerType == OnlineMapsLocationServiceMarkerType.twoD) value = (_marker as OnlineMapsMarker).rotation * 360;
+        else value = (_marker as OnlineMapsMarker3D).rotationY;
+
+        if (trueHeading - value > 180) value += 360;
+        else if (trueHeading - value < -180) value -= 360;
+
+        if (Math.Abs(trueHeading - value) >= float.Epsilon)
         {
-            if (markerType == OnlineMapsLocationServiceMarkerType.twoD) (_marker as OnlineMapsMarker).rotation = trueHeading / 360;
-            else (_marker as OnlineMapsMarker3D).rotation = Quaternion.Euler(0, trueHeading, 0);
-        }
+            if (!lerpCompassValueForMarker || Mathf.Abs(trueHeading - value) < 0.003f) value = trueHeading;
+            else value = Mathf.Lerp(value, trueHeading, 0.02f);
 
-        api.Redraw();
+            if (markerType == OnlineMapsLocationServiceMarkerType.twoD) (_marker as OnlineMapsMarker).rotation = value / 360;
+            else (_marker as OnlineMapsMarker3D).rotationY = value;
+
+            api.Redraw();
+        }
     }
 
     /// <summary>
@@ -462,7 +541,7 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
         if (OnGetLocation != null) OnGetLocation(out longitude, out latitude);
         else
         {
-            GetLocation(out longitude, out latitude);
+            GetLocationFromSensor(out longitude, out latitude);
         }
 
         if (Math.Abs(position.x - longitude) > float.Epsilon)
@@ -477,13 +556,8 @@ public abstract class OnlineMapsLocationServiceBase : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Updates the speed data.
+    /// </summary>
     public abstract void UpdateSpeed();
-
-    public abstract bool TryStartLocationService();
-
-    public abstract void StopLocationService();
-
-    public abstract bool IsLocationServiceRunning();
-
-    public abstract void GetLocation(out float longitude, out float latitude);
 }

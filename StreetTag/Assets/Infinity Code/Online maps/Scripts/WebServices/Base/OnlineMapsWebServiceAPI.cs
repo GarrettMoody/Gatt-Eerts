@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -17,6 +17,10 @@ public abstract class OnlineMapsWebServiceAPI
     /// Event that occurs after OnComplete, when the response from webservice processed.
     /// </summary>
     public Action<OnlineMapsWebServiceAPI> OnFinish;
+
+    public Action<OnlineMapsWebServiceAPI> OnSuccess;
+
+    public Action<OnlineMapsWebServiceAPI> OnFailed;
 
     /// <summary>
     /// In this variable you can put any data that you need to work with requests.

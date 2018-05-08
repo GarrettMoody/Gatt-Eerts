@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -21,6 +21,9 @@ public class OnlineMapsDrawingLine : OnlineMapsDrawingElement
     private float _width = 1;
     private IEnumerable _points;
 
+    /// <summary>
+    /// The width of the line for which HitTes will be calculated.
+    /// </summary>
     public float? hitTestWidth;
 
     /// <summary>
@@ -157,7 +160,6 @@ public class OnlineMapsDrawingLine : OnlineMapsDrawingElement
         active = true;
 
         InitMesh(control, "Line", color, default(Color), texture);
-
         InitLineMesh(points, control, ref vertices, ref normals, ref triangles, ref uv, width);
 
         mesh.Clear();

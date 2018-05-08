@@ -1,3 +1,6 @@
+/*     INFINITY CODE 2013-2018      */
+/*   http://www.infinity-code.com   */
+
 /// <summary>
 /// Base class for result objects of What 3 Words.
 /// </summary>
