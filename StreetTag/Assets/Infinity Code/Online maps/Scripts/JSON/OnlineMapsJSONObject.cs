@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -13,9 +13,6 @@ public class OnlineMapsJSONObject : OnlineMapsJSONItem
 {
     private Dictionary<string, OnlineMapsJSONItem> _table;
 
-    /// <summary>
-    /// Dictionary of items
-    /// </summary>
     public Dictionary<string, OnlineMapsJSONItem> table
     {
         get { return _table; }
@@ -58,28 +55,6 @@ public class OnlineMapsJSONObject : OnlineMapsJSONItem
     public void Add(string name, OnlineMapsJSONItem value)
     {
         _table[name] = value;
-    }
-
-    public override OnlineMapsJSONItem AppendObject(object obj)
-    {
-        Combine(OnlineMapsJSON.Serialize(obj));
-        return this;
-    }
-
-    /// <summary>
-    /// Combines two JSON Object.
-    /// </summary>
-    /// <param name="other">Other JSON Object</param>
-    /// <param name="overwriteExistingValues">Overwrite the existing values?</param>
-    public void Combine(OnlineMapsJSONItem other, bool overwriteExistingValues = false)
-    {
-        OnlineMapsJSONObject otherObj = other as OnlineMapsJSONObject;
-        if (otherObj == null) throw new Exception("Only OnlineMapsJSONObject is allowed to be combined.");
-        Dictionary<string, OnlineMapsJSONItem> otherDict = otherObj.table;
-        foreach (KeyValuePair<string, OnlineMapsJSONItem> pair in otherDict)
-        {
-            if (overwriteExistingValues || !_table.ContainsKey(pair.Key)) _table[pair.Key] = pair.Value;
-        }
     }
 
     public override object Deserialize(Type type)

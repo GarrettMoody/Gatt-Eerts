@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -133,7 +133,7 @@ namespace InfinityCode.OnlineMapsExamples
 
                 // Calculate the area.
                 float p = (d1 + d2 + d3) / 2;
-                area += Mathf.Sqrt(p * (p - d1) * (p - d2) * (p - d3));
+                area += Mathf.Sqrt(p * (p - d1) * (p - d2) * (p - d2));
             }
 
             Debug.Log("Area: " + area + " km^2");

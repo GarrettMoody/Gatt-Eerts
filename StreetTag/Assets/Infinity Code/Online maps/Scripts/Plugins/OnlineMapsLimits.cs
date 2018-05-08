@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using UnityEngine;
@@ -55,7 +55,7 @@ public class OnlineMapsLimits : MonoBehaviour
     /// </summary>
     public bool usePositionRange;
 
-    private void Start()
+    public void Start()
     {
         if (useZoomRange) OnlineMaps.instance.zoomRange = new OnlineMapsRange(minZoom, maxZoom);
         if (usePositionRange) OnlineMaps.instance.positionRange = new OnlineMapsPositionRange(minLatitude, minLongitude, maxLatitude, maxLongitude, positionRangeType);

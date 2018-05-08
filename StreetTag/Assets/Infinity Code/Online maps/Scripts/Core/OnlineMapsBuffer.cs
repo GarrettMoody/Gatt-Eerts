@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -22,9 +22,6 @@ public class OnlineMapsBuffer
     /// </summary>
     public static Func<IEnumerable<OnlineMapsMarker>, IEnumerable<OnlineMapsMarker>> OnSortMarker;
 
-    /// <summary>
-    /// Can the buffer unload tiles?
-    /// </summary>
     public bool allowUnloadTiles = true;
 
     /// <summary>
@@ -201,7 +198,7 @@ public class OnlineMapsBuffer
         {
             OnSortMarker = null;
 
-            lock (OnlineMapsTile.lockTiles)
+            lock (OnlineMapsTile.tiles)
             {
                 foreach (OnlineMapsTile tile in OnlineMapsTile.tiles) tile.Dispose();
                 OnlineMapsTile.tiles = null;
@@ -329,17 +326,6 @@ public class OnlineMapsBuffer
 
         api.projection.TileToCoordinates(tlx, tly, apiZoom, out tlx, out tly);
         api.projection.TileToCoordinates(brx, bry, apiZoom, out brx, out bry);
-
-        int max = (1 << apiZoom) * OnlineMapsUtils.tileSize;
-        if (max == api.width)
-        {
-            double lng = apiLongitude + 180;
-            tlx = lng + 0.001;
-            if (tlx > 180) tlx -= 360;
-
-            brx = lng - 0.001;
-            if (brx > 180) brx -= 360;
-        }
     }
 
     private void GetFrontBufferPosition(double px, double py, OnlineMapsVector2i _bufferPosition, int zoom, int apiWidth, int apiHeight)
@@ -410,7 +396,7 @@ public class OnlineMapsBuffer
         if (tile.zoom == bufferZoom) SetBufferTile(tile);
     }
 
-    private Rect SetBufferTile(OnlineMapsTile tile, int? offsetX = null)
+    private Rect SetBufferTile(OnlineMapsTile tile)
     {
         if (api.target == OnlineMapsTarget.tileset) return default(Rect);
 
@@ -424,16 +410,12 @@ public class OnlineMapsBuffer
         if (px < 0) px += maxX;
         else if (px >= maxX) px -= maxX;
 
-        if (api.width == maxX * s && px < 2 && !offsetX.HasValue) SetBufferTile(tile, maxX);
-
-        if (offsetX.HasValue) px += offsetX.Value;
-
         px *= s;
         py *= s;
 
         if (px + s < 0 || py + s < 0 || px > width || py > height) return new Rect(0, 0, 0, 0);
 
-        if (!tile.hasColors || tile.status != OnlineMapsTileStatus.loaded)
+        if (!tile.hasColors)
         {
             const int hs = s / 2;
             int sx = tile.x % 2 * hs;
@@ -504,17 +486,23 @@ public class OnlineMapsBuffer
         {
             for (int y = 0; y < size; y++)
             {
-                int oys = (ry - y) * s + sx;
+                int oy = ry - y;
+                int oys = oy * s;
                 int scaledY = y * scale + py;
                 for (int x = 0; x < size; x++)
                 {
-                    Color32 clr = colors[oys + x];
+                    int ox = sx + x;
+                    Color32 clr = colors[oys + ox];
                     int scaledX = x * scale + px;
 
-                    for (int by = scaledY; by < scaledY + scale; by++)
+                    for (int by = 0; by < scale; by++)
                     {
-                        int bpy = by * width + scaledX;
-                        for (int bx = bpy; bx < bpy + scale; bx++) backBuffer[bx] = clr;
+                        int bpy = (scaledY + by) * width;
+                        for (int bx = 0; bx < scale; bx++)
+                        {
+                            int bpx = scaledX + bx;
+                            backBuffer[bpy + bpx] = clr;
+                        }
                     }
                 }
             }
@@ -545,17 +533,8 @@ public class OnlineMapsBuffer
 
         double mx, my;
         marker.GetPosition(out mx, out my);
-        double px, py;
-        api.projection.CoordinatesToTile(mx, my, bufferZoom, out px, out py);
 
-        int maxX = 1 << bufferZoom;
-
-        bool isEntireWorld = api.width == maxX * s;
-        if (isEntireWorld)
-        {
-            
-        }
-        else if (!(((mx > sx && mx < ex) || (mx + 360 > sx && mx + 360 < ex) ||
+        if (!(((mx > sx && mx < ex) || (mx + 360 > sx && mx + 360 < ex) ||
              (mx - 360 > sx && mx - 360 < ex)) &&
             my < sy && my > ey)) return;
 
@@ -570,22 +549,15 @@ public class OnlineMapsBuffer
 
         marker.locked = true;
 
+        double px, py;
+        api.projection.CoordinatesToTile(mx, my, bufferZoom, out px, out py);
         px -= bufferPosition.x;
         py -= bufferPosition.y;
 
-        if (isEntireWorld)
-        {
-            double tx, ty;
-            api.projection.CoordinatesToTile(apiLongitude, apiLatitude, bufferZoom, out tx, out ty);
-            tx -= api.width / s / 2;
+        int maxX = 1 << bufferZoom;
 
-            if (px < tx) px += maxX;
-        }
-        else
-        {
-            if (px < 0) px += maxX;
-            else if (px > maxX) px -= maxX;
-        }
+        if (px < 0) px += maxX;
+        else if (px > maxX) px -= maxX;
 
         OnlineMapsVector2i ip = marker.GetAlignedPosition((int) (px * s), (int) (py * s));
 
@@ -664,7 +636,7 @@ public class OnlineMapsBuffer
 
         if (count == 0) return;
 #endif
-        lock (OnlineMapsTile.lockTiles)
+        lock (OnlineMapsTile.tiles)
         {
             foreach (OnlineMapsTile tile in OnlineMapsTile.tiles)
             {
@@ -686,7 +658,7 @@ public class OnlineMapsBuffer
         int maxY = 1 << zoom;
 
         if (pos.y < 0) pos.y = 0;
-        if (pos.y >= maxY - countY) pos.y = maxY - countY;
+        if (pos.y >= maxY - countY - 1) pos.y = maxY - countY - 1;
 
         if (api.target == OnlineMapsTarget.texture)
         {
@@ -715,7 +687,7 @@ public class OnlineMapsBuffer
 
         List<OnlineMapsTile> newBaseTiles = new List<OnlineMapsTile>();
 
-        lock (OnlineMapsTile.lockTiles)
+        lock (OnlineMapsTile.tiles)
         {
             for (int i = 0; i < OnlineMapsTile.tiles.Count; i++) OnlineMapsTile.tiles[i].used = false;
 

@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using UnityEngine;
@@ -23,9 +23,6 @@ public class OnlineMapsSpriteRendererControl:OnlineMapsControlBase2D
         get { return OnlineMapsControlBase.instance as OnlineMapsSpriteRendererControl; }
     }
 
-    /// <summary>
-    /// Collider
-    /// </summary>
     public Collider cl
     {
         get
@@ -42,9 +39,6 @@ public class OnlineMapsSpriteRendererControl:OnlineMapsControlBase2D
         }
     }
 
-    /// <summary>
-    /// Collider2D
-    /// </summary>
     public Collider2D cl2D
     {
         get
@@ -61,84 +55,93 @@ public class OnlineMapsSpriteRendererControl:OnlineMapsControlBase2D
         }
     }
 
-    private bool GetCoords2D(Vector2 position, out double lng, out double lat)
+    public override Vector2 GetCoords(Vector2 position)
     {
-        lng = lat = 0;
-        RaycastHit2D hit = Physics2D.GetRayIntersection(Camera.main.ScreenPointToRay(position), Mathf.Infinity);
-        if (hit.collider == null || hit.collider.gameObject != gameObject) return false;
-        if (cl2D == null) return false;
-
-        HitPointToCoords(hit.point, out lng, out lat);
-        return true;
+        Vector2 coords2D = GetCoords2D(position);
+        return coords2D != Vector2.zero? coords2D: GetCoords3D(position);
     }
 
-    private bool GetCoords3D(Vector3 position, out double lng, out  double lat)
+    private Vector2 GetCoords2D(Vector2 position)
     {
-        lng = lat = 0;
+        RaycastHit2D hit = Physics2D.GetRayIntersection(Camera.main.ScreenPointToRay(position), Mathf.Infinity);
+        if (hit.collider == null || hit.collider.gameObject != gameObject) return Vector2.zero;
+        if (cl2D == null) return Vector2.zero;
+
+        Vector3 size = cl2D.bounds.max - new Vector3(hit.point.x, hit.point.y);
+        size.x = size.x / cl2D.bounds.size.x;
+        size.y = size.y / cl2D.bounds.size.y;
+
+        Vector2 r = new Vector3(size.x - .5f, size.y - .5f);
+
+        int countX = map.width / OnlineMapsUtils.tileSize;
+        int countY = map.height / OnlineMapsUtils.tileSize;
+
+        double px, py;
+        map.GetTilePosition(out px, out py);
+        px -= countX * r.x;
+        py += countY * r.y;
+
+        map.projection.TileToCoordinates(px, py, map.zoom, out px, out py);
+        return new Vector2((float)px, (float)py);
+    }
+
+    private Vector2 GetCoords3D(Vector2 position)
+    {
         RaycastHit hit;
-        if (!Physics.Raycast(Camera.main.ScreenPointToRay(position), out hit)) return false;
+        if (!Physics.Raycast(Camera.main.ScreenPointToRay(position), out hit)) return Vector2.zero;
 
-        if (hit.collider.gameObject != gameObject) return false;
+        if (hit.collider.gameObject != gameObject) return Vector2.zero;
 
-        HitPointToCoords(hit.point, out lng, out lat);
-        return true;
+        Vector3 size = cl.bounds.max - hit.point;
+        size.x = size.x / cl.bounds.size.x;
+        size.y = size.y / cl.bounds.size.y;
+
+        Vector2 r = new Vector3(size.x - .5f, size.y - .5f);
+
+        int countX = map.width / OnlineMapsUtils.tileSize;
+        int countY = map.height / OnlineMapsUtils.tileSize;
+
+        double px, py;
+        map.GetTilePosition(out px, out py);
+        px -= countX * r.x;
+        py += countY * r.y;
+        
+        map.projection.TileToCoordinates(px, py, map.zoom, out px, out py);
+        return new Vector2((float)px, (float)py);
     }
 
     public override bool GetCoords(out double lng, out double lat, Vector2 position)
     {
-        if (GetCoords2D(position, out lng, out lat)) return true;
-        return GetCoords3D(position, out lng, out lat);
+        RaycastHit hit;
+        lng = lat = 0;
+        if (!Physics.Raycast(Camera.main.ScreenPointToRay(position), out hit)) return false;
+
+        if (hit.collider.gameObject != gameObject) return false;
+
+        Vector3 size = cl.bounds.max - hit.point;
+        size.x = size.x / cl.bounds.size.x;
+        size.y = size.y / cl.bounds.size.y;
+
+        Vector2 r = new Vector3(size.x - .5f, size.y - .5f);
+
+        int countX = map.width / OnlineMapsUtils.tileSize;
+        int countY = map.height / OnlineMapsUtils.tileSize;
+
+        double px, py;
+        map.GetTilePosition(out px, out py);
+        px -= countX * r.x;
+        py += countY * r.y;
+
+        map.projection.TileToCoordinates(px, py, map.zoom, out lng, out lat);
+        return true;
     }
 
     public override Rect GetRect()
     {
-        Vector2 p1 = Camera.main.WorldToScreenPoint(spriteRenderer.bounds.min);
-        Vector2 p2 = Camera.main.WorldToScreenPoint(spriteRenderer.bounds.max);
+        Vector2 p1 = Camera.main.WorldToScreenPoint(cl.bounds.min);
+        Vector2 p2 = Camera.main.WorldToScreenPoint(cl.bounds.max);
         Vector2 s = p2 - p1;
         return new Rect(p1.x, p1.y, s.x, s.y);
-    }
-
-    public override Vector2 GetScreenPosition(double lng, double lat)
-    {
-        double tlx, tly, brx, bry;
-        map.GetTileCorners(out tlx, out tly, out brx, out bry);
-        int maxX = 1 << map.zoom;
-        if (tlx > brx) brx += maxX;
-
-        double px, py;
-        map.projection.CoordinatesToTile(lng, lat, map.zoom, out px, out py);
-
-        if (px + maxX / 2 < tlx) px += maxX;
-
-        double rx = (px - tlx) / (brx - tlx) - 0.5;
-        double ry = 0.5 - (py - tly) / (bry - tly);
-
-        Bounds bounds = spriteRenderer.sprite.bounds;
-        Vector3 size = bounds.size;
-
-        rx *= size.x;
-        ry *= size.y;
-
-        Vector3 worldPoint = transform.localToWorldMatrix.MultiplyPoint(new Vector3((float)rx, (float)ry, bounds.center.z));
-        return Camera.main.WorldToScreenPoint(worldPoint);
-    }
-
-    private void HitPointToCoords(Vector3 point, out double lng, out double lat)
-    {
-        double tlx, tly, brx, bry;
-        map.GetTileCorners(out tlx, out tly, out brx, out bry);
-
-        if (tlx > brx) brx += 1 << map.zoom;
-
-        Bounds bounds = spriteRenderer.sprite.bounds;
-        Vector3 size = bounds.size;
-        Vector3 localPoint = transform.worldToLocalMatrix.MultiplyPoint(point);
-        double px = localPoint.x / size.x + 0.5;
-        double py = localPoint.y / size.y + 0.5;
-        px = (brx - tlx) * px + tlx;
-        py = bry - (bry - tly) * py;
-
-        map.projection.TileToCoordinates(px, py, map.zoom, out lng, out lat);
     }
 
     protected override void OnEnableLate()

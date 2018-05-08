@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System.Diagnostics;
@@ -21,7 +21,6 @@ public class OnlineMapsCacheEditor:Editor
     private SerializedProperty pFileCacheUnloadRate;
     private OnlineMapsCache cache;
     private int? fileCacheSize;
-    private OnlineMaps map;
 
     private void CacheSerializedFields()
     {
@@ -36,56 +35,9 @@ public class OnlineMapsCacheEditor:Editor
         pFileCacheUnloadRate = serializedObject.FindProperty("fileCacheUnloadRate");
     }
 
-    private void CheckFileCacheSize()
-    {
-        if (pMaxFileCacheSize.intValue >= pMaxMemoryCacheSize.intValue * 2) return;
-
-        EditorGUILayout.BeginVertical(GUI.skin.box);
-
-        EditorGUILayout.HelpBox("The size of the file cache should be a minimum of twice the size of the memory cache.", MessageType.Error);
-        if (GUILayout.Button("Increase size of the file cache"))
-        {
-            pMaxFileCacheSize.intValue = pMaxMemoryCacheSize.intValue * 2;
-        }
-
-        EditorGUILayout.EndVertical();
-    }
-
-    private void CheckMemoryCacheSize()
-    {
-        if (map == null) return;
-        int w = map.target == OnlineMapsTarget.tileset ? map.tilesetWidth : map.width;
-        int h = map.target == OnlineMapsTarget.tileset ? map.tilesetHeight : map.height;
-        w /= OnlineMapsUtils.tileSize;
-        h /= OnlineMapsUtils.tileSize;
-        w += 2;
-        h += 2;
-        int c = w * h;
-
-        for (int i = 0; i < 5; i++)
-        {
-            c += (w * h) >> (i + 2);
-        }
-
-        int s = (int)(c * 0.2);
-
-        if (pMaxMemoryCacheSize.intValue >= s) return;
-
-        EditorGUILayout.BeginVertical(GUI.skin.box);
-
-        EditorGUILayout.HelpBox("The minimum recommended memory cache is " + s + " MB.", MessageType.Error);
-        if (GUILayout.Button("Increase size of the memory cache"))
-        {
-            pMaxMemoryCacheSize.intValue = s;
-        }
-
-        EditorGUILayout.EndVertical();
-    }
-
     private void OnEnable()
     {
         cache = target as OnlineMapsCache;
-        map = cache.GetComponent<OnlineMaps>();
         CacheSerializedFields();
     }
 
@@ -110,8 +62,6 @@ public class OnlineMapsCacheEditor:Editor
 #if UNITY_WEBPLAYER || UNITY_WEBGL
             EditorGUILayout.HelpBox("File Cache is not supported for Webplayer and WebGL.", MessageType.Warning);
 #endif
-            CheckFileCacheSize();
-
 
             EditorGUILayout.PropertyField(pMaxFileCacheSize, new GUIContent("Size (mb)"));
             pFileCacheUnloadRate.floatValue = EditorGUILayout.Slider("Unload (%)", Mathf.RoundToInt(pFileCacheUnloadRate.floatValue * 100), 1, 50) / 100;
@@ -170,8 +120,6 @@ public class OnlineMapsCacheEditor:Editor
 
         if (pUseMemoryCache.boolValue)
         {
-            CheckMemoryCacheSize();
-
             EditorGUILayout.PropertyField(pMaxMemoryCacheSize, new GUIContent("Size (mb)"));
             pMemoryCacheUnloadRate.floatValue = EditorGUILayout.Slider("Unload (%)", Mathf.RoundToInt(pMemoryCacheUnloadRate.floatValue * 100), 1, 50) / 100;
             if (Application.isPlaying)

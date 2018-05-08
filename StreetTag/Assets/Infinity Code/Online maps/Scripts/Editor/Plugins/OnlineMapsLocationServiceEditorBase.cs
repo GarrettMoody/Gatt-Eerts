@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using UnityEditor;
@@ -26,7 +26,6 @@ public abstract class OnlineMapsLocationServiceEditorBase : Editor
     private SerializedProperty pAutoStopUpdateOnInput;
     private SerializedProperty pRestoreAfter;
     private SerializedProperty pDisableEmulatorInPublish;
-    private SerializedProperty pLerpCompassValueForMarker;
 
     private static GUIStyle toggleStyle
     {
@@ -60,7 +59,6 @@ public abstract class OnlineMapsLocationServiceEditorBase : Editor
         pUpdatePosition = serializedObject.FindProperty("updatePosition");
         pAutoStopUpdateOnInput = serializedObject.FindProperty("autoStopUpdateOnInput");
         pRestoreAfter = serializedObject.FindProperty("restoreAfter");
-        pLerpCompassValueForMarker = serializedObject.FindProperty("lerpCompassValueForMarker");
     }
 
     private void OnCreateMarkerGUI()
@@ -93,7 +91,6 @@ public abstract class OnlineMapsLocationServiceEditorBase : Editor
 
             EditorGUILayout.PropertyField(pMarkerTooltip, new GUIContent("Tooltip"));
             EditorGUILayout.PropertyField(pUseCompassForMarker, new GUIContent("Use Compass"));
-            if (pUseCompassForMarker.boolValue) EditorGUILayout.PropertyField(pLerpCompassValueForMarker, new GUIContent("Lerp Compass Value"));
         }
 
         EditorGUILayout.EndVertical();
@@ -196,11 +193,7 @@ public abstract class OnlineMapsLocationServiceEditorBase : Editor
         EditorGUILayout.EndVertical();
     }
 
-    public virtual void CustomInspectorGUI()
-    {
-    }
+    public abstract void CustomInspectorGUI();
 
-    public virtual void CustomUpdatePositionGUI()
-    {
-    }
+    public abstract void CustomUpdatePositionGUI();
 }

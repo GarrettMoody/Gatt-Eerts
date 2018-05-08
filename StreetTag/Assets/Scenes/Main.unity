@@ -38,11 +38,11 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657886, g: 0.4964127, b: 0.57481724, a: 1}
+  m_IndirectSpecularColor: {r: 0.4465934, g: 0.49642956, b: 0.5748249, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 11
+  serializedVersion: 9
   m_GIWorkflowMode: 0
   m_GISettings:
     serializedVersion: 2
@@ -54,7 +54,7 @@ LightmapSettings:
     m_EnableBakedLightmaps: 1
     m_EnableRealtimeLightmaps: 1
   m_LightmapEditorSettings:
-    serializedVersion: 9
+    serializedVersion: 8
     m_Resolution: 2
     m_BakeResolution: 40
     m_TextureWidth: 1024
@@ -71,26 +71,23 @@ LightmapSettings:
     m_FinalGatherFiltering: 1
     m_FinalGatherRayCount: 256
     m_ReflectionCompression: 2
-    m_MixedBakeMode: 2
+    m_MixedBakeMode: 3
     m_BakeBackend: 0
     m_PVRSampling: 1
     m_PVRDirectSampleCount: 32
     m_PVRSampleCount: 500
     m_PVRBounces: 2
-    m_PVRFilterTypeDirect: 0
-    m_PVRFilterTypeIndirect: 0
-    m_PVRFilterTypeAO: 0
+    m_PVRFiltering: 0
     m_PVRFilteringMode: 1
     m_PVRCulling: 1
     m_PVRFilteringGaussRadiusDirect: 1
     m_PVRFilteringGaussRadiusIndirect: 5
     m_PVRFilteringGaussRadiusAO: 2
-    m_PVRFilteringAtrousPositionSigmaDirect: 0.5
-    m_PVRFilteringAtrousPositionSigmaIndirect: 2
-    m_PVRFilteringAtrousPositionSigmaAO: 1
-    m_ShowResolutionOverlay: 1
+    m_PVRFilteringAtrousColorSigma: 1
+    m_PVRFilteringAtrousNormalSigma: 1
+    m_PVRFilteringAtrousPositionSigma: 1
   m_LightingDataAsset: {fileID: 0}
-  m_UseShadowmask: 1
+  m_ShadowMaskMode: 2
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -110,8 +107,6 @@ NavMeshSettings:
     manualTileSize: 0
     tileSize: 256
     accuratePlacement: 0
-    debug:
-      m_Flags: 0
   m_NavMeshData: {fileID: 0}
 --- !u!1 &473348412
 GameObject:
@@ -184,11 +179,11 @@ Camera:
   m_TargetEye: 3
   m_HDR: 1
   m_AllowMSAA: 1
-  m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+  m_StereoMirrorMode: 0
 --- !u!4 &473348417
 Transform:
   m_ObjectHideFlags: 0
@@ -344,8 +339,7 @@ MonoBehaviour:
     latitude: 0
     longitude: 0
     _scale: 1
-  tooltipBackgroundTexture: {fileID: 2800000, guid: a8d1734e646100c4e83635fecf978e15,
-    type: 3}
+  tooltipBackgroundTexture: {fileID: 0}
   traffic: 0
   trafficProviderID: googlemaps
   type: 0
@@ -357,7 +351,7 @@ MonoBehaviour:
   width: 0
   latitude: 0
   longitude: 0
-  _zoom: 15
+  _zoom: 19
   _activeTypeSettings: 
 --- !u!4 &830007020
 Transform:
@@ -458,7 +452,6 @@ MonoBehaviour:
   tilesetShader: {fileID: 4800000, guid: f65580aa9bbbd7e42b05adab01e1ca2d, type: 3}
   useElevation: 0
   yScaleValue: 0
-  _mipmapForTiles: 0
 --- !u!114 &830007024
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -475,9 +468,8 @@ MonoBehaviour:
   createMarkerInUserPosition: 0
   disableEmulatorInPublish: 0
   emulatorCompass: 0
-  emulatorPosition: {x: -88.57149, y: 44.2761}
+  emulatorPosition: {x: -88.0197, y: 44.457}
   findLocationByIP: 0
-  lerpCompassValueForMarker: 1
   markerTooltip: 
   markerType: 1
   marker2DAlign: 4
@@ -504,7 +496,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91000ded1007d4350af114bbe485672c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prefab: {fileID: 0}
+  players:
+  - {fileID: 1525972197618494, guid: 3868d3c75e4c64707ba391e4bec2cace, type: 2}
+  - {fileID: 1256869330747506, guid: ef53178fefd474a6ea92efa7f3ad64b2, type: 2}
+  - {fileID: 1660945731705808, guid: f837f307dbad64e5ab1a639dd326dc47, type: 2}
+  playingField: {fileID: 1090026011089504, guid: 3ab2f0536e0b64c24b4da98deac339c1,
+    type: 2}
+  coin: {fileID: 1000270396083052, guid: c6606a8de81fa4827b7050153c720fdd, type: 2}
+  coins: 0
 --- !u!114 &830007026
 MonoBehaviour:
   m_ObjectHideFlags: 0

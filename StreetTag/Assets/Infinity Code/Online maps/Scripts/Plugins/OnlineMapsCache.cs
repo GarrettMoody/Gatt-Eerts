@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 #if !UNITY_WEBPLAYER && ((!UNITY_WP_8_1 && !UNITY_WEBGL) || UNITY_EDITOR)
@@ -36,7 +36,6 @@ public class OnlineMapsCache:MonoBehaviour
     /// <summary>
     /// Event occurs when loading the tile from the memory cache.
     /// </summary>
-    [Obsolete("Now this event is never called.")]
     public Action<OnlineMapsTile> OnLoadedFromMemoryCache;
 
     /// <summary>
@@ -100,7 +99,6 @@ public class OnlineMapsCache:MonoBehaviour
     [NonSerialized]
     private int _memoryCacheSize;
     private IEnumerator saveFileCacheAtlasCoroutine;
-    private static StringBuilder stringBuilder;
 
     /// <summary>
     /// The reference to an instance of the cache.
@@ -145,17 +143,16 @@ public class OnlineMapsCache:MonoBehaviour
         }
     }
 
-    private void AddMemoryCacheItem(OnlineMapsTile tile)
+    private void AddMemoryCacheItem(OnlineMapsTile tile, byte[] bytes)
     {
         if (!useMemoryCache || maxMemoryCacheSize <= 0) return;
 
         string tileKey = GetTileKey(tile);
         int tileHash = tileKey.GetHashCode();
-
-        AddMemoryCacheItem(tile, tileHash, tileKey);
+        AddMemoryCacheItem(bytes, tileHash, tileKey);
     }
 
-    private void AddMemoryCacheItem(OnlineMapsTile tile, int tileHash, string tileKey)
+    private void AddMemoryCacheItem(byte[] bytes, int tileHash, string tileKey)
     {
         for (int i = 0; i < countMemoryItems; i++)
         {
@@ -165,10 +162,19 @@ public class OnlineMapsCache:MonoBehaviour
         if (memoryCache == null) memoryCache = new MemoryCacheItem[maxMemoryCacheSize * 10];
         else if (memoryCache.Length == countMemoryItems) Array.Resize(ref memoryCache, memoryCache.Length + 50);
 
-        MemoryCacheItem item = new MemoryCacheItem(tileKey, tile);
+        MemoryCacheItem item = new MemoryCacheItem(tileKey, bytes);
         memoryCache[countMemoryItems++] = item;
         _memoryCacheSize += item.size;
         if (memoryCacheSize > maxMemoryCacheSize * 1000000) UnloadOldMemoryCacheItems();
+    }
+
+    private void AddMemoryCacheTrafficItem(OnlineMapsTile tile, byte[] bytes)
+    {
+        if (!useMemoryCache || maxMemoryCacheSize <= 0) return;
+
+        string tileKey = GetTrafficKey(tile);
+        int tileHash = tileKey.GetHashCode();
+        AddMemoryCacheItem(bytes, tileHash, tileKey);
     }
 
     /// <summary>
@@ -212,16 +218,14 @@ public class OnlineMapsCache:MonoBehaviour
     /// <returns>File cache folder</returns>
     public StringBuilder GetFileCacheFolder()
     {
-        if (stringBuilder == null) stringBuilder = new StringBuilder();
-        else stringBuilder.Length = 0;
-
-        if (fileCacheLocation == CacheLocation.persistentDataPath) stringBuilder.Append(Application.persistentDataPath).Append("/").Append("OnlineMapsCache");
+        StringBuilder builder = new StringBuilder();
+        if (fileCacheLocation == CacheLocation.persistentDataPath) builder.Append(Application.persistentDataPath);
         else
         {
             if (string.IsNullOrEmpty(fileCacheCustomPath)) throw new Exception("Custom path is empty.");
-            stringBuilder.Append(fileCacheCustomPath);
+            builder.Append(fileCacheCustomPath);
         }
-        return stringBuilder;
+        return builder;
     }
 
     /// <summary>
@@ -256,20 +260,16 @@ public class OnlineMapsCache:MonoBehaviour
 
     private static string GetTileKey(OnlineMapsTile tile)
     {
-        if (stringBuilder == null) stringBuilder = new StringBuilder();
-        else stringBuilder.Length = 0;
-
-        stringBuilder.Append(tile.mapType.fullID).Append(tile.key).Append(tile.labels).Append(tile.language);
-        return stringBuilder.ToString();
+        StringBuilder builder = new StringBuilder();
+        builder.Append(tile.mapType.fullID).Append(tile.key).Append(tile.labels).Append(tile.language);
+        return builder.ToString();
     }
 
     private static string GetTrafficKey(OnlineMapsTile tile)
     {
-        if (stringBuilder == null) stringBuilder = new StringBuilder();
-        else stringBuilder.Length = 0;
-
-        stringBuilder.Append("traffic").Append(tile.key);
-        return stringBuilder.ToString();
+        StringBuilder builder = new StringBuilder();
+        builder.Append("traffic").Append(tile.key);
+        return builder.ToString();
     }
 
     /// <summary>
@@ -280,9 +280,9 @@ public class OnlineMapsCache:MonoBehaviour
     public string GetFullTilePath(string shortFilename)
     {
 #if ALLOW_FILECACHE
-        stringBuilder = GetFileCacheFolder();
-        stringBuilder.Append("/").Append(shortFilename).Append(".png");
-        return stringBuilder.ToString();
+        StringBuilder builder = GetFileCacheFolder();
+        builder.Append("/").Append(shortFilename).Append(".png");
+        return builder.ToString();
 #else
         return null;
 #endif
@@ -297,9 +297,7 @@ public class OnlineMapsCache:MonoBehaviour
     {
 #if ALLOW_FILECACHE
         int startIndex = 0;
-        if (stringBuilder == null) stringBuilder = new StringBuilder();
-        else stringBuilder.Length = 0;
-
+        StringBuilder builder = new StringBuilder();
         int l = fileCacheTilePath.Length;
         for (int i = 0; i < l; i++)
         {
@@ -311,17 +309,17 @@ public class OnlineMapsCache:MonoBehaviour
                     c = fileCacheTilePath[j];
                     if (c == '}')
                     {
-                        stringBuilder.Append(fileCacheTilePath.Substring(startIndex, i - startIndex));
+                        builder.Append(fileCacheTilePath.Substring(startIndex, i - startIndex));
                         string v = fileCacheTilePath.Substring(i + 1, j - i - 1).ToLower();
-                        if (v == "pid") stringBuilder.Append(tile.mapType.provider.id);
-                        else if (v == "mid") stringBuilder.Append(tile.mapType.id);
-                        else if (v == "zoom" || v == "z") stringBuilder.Append(tile.zoom);
-                        else if (v == "x") stringBuilder.Append(tile.x);
-                        else if (v == "y") stringBuilder.Append(tile.y);
-                        else if (v == "quad") OnlineMapsUtils.TileToQuadKey(tile.x, tile.y, tile.zoom, stringBuilder);
-                        else if (v == "lng") stringBuilder.Append(tile.language);
-                        else if (v == "lbs") stringBuilder.Append(tile.labels? "le": "ld");
-                        else stringBuilder.Append(v);
+                        if (v == "pid") builder.Append(tile.mapType.provider.id);
+                        else if (v == "mid") builder.Append(tile.mapType.id);
+                        else if (v == "zoom" || v == "z") builder.Append(tile.zoom);
+                        else if (v == "x") builder.Append(tile.x);
+                        else if (v == "y") builder.Append(tile.y);
+                        else if (v == "quad") builder.Append(OnlineMapsUtils.TileToQuadKey(tile.x, tile.y, tile.zoom));
+                        else if (v == "lng") builder.Append(tile.language);
+                        else if (v == "lbs") builder.Append(tile.labels? "le": "ld");
+                        else builder.Append(v);
                         i = j;
                         startIndex = j + 1;
                         break;
@@ -330,8 +328,8 @@ public class OnlineMapsCache:MonoBehaviour
             }
         }
 
-        stringBuilder.Append(fileCacheTilePath.Substring(startIndex, l - startIndex));
-        return stringBuilder;
+        builder.Append(fileCacheTilePath.Substring(startIndex, l - startIndex));
+        return builder;
 #else
         return null;
 #endif
@@ -345,7 +343,7 @@ public class OnlineMapsCache:MonoBehaviour
 
     private void LoadTile(OnlineMapsTile tile, byte[] bytes)
     {
-        Texture2D texture = new Texture2D(256, 256, TextureFormat.ARGB32, map.control.mipmapForTiles);
+        Texture2D texture = new Texture2D(0, 0, TextureFormat.RGB24, false);
         texture.LoadImage(bytes);
         texture.wrapMode = TextureWrapMode.Clamp;
 
@@ -363,9 +361,12 @@ public class OnlineMapsCache:MonoBehaviour
 
         if (map.traffic && !string.IsNullOrEmpty(tile.trafficURL))
         {
-            tile.trafficWWW = OnlineMapsUtils.GetWWW(tile.trafficURL);
-            tile.trafficWWW.customData = tile;
-            tile.trafficWWW.OnComplete += map.OnTrafficWWWComplete;
+            if (!TryLoadTraffic(tile))
+            {
+                tile.trafficWWW = OnlineMapsUtils.GetWWW(tile.trafficURL);
+                tile.trafficWWW.customData = tile;
+                tile.trafficWWW.OnComplete += map.OnTrafficWWWComplete;
+            }
         }
     }
 
@@ -382,7 +383,7 @@ public class OnlineMapsCache:MonoBehaviour
 
     private void OnPreloadTiles()
     {
-        lock (OnlineMapsTile.lockTiles)
+        lock (OnlineMapsTile.tiles)
         {
             long start = DateTime.Now.Ticks;
             for (int i = 0; i < OnlineMapsTile.tiles.Count; i++)
@@ -411,8 +412,13 @@ public class OnlineMapsCache:MonoBehaviour
 
     private void OnTileDownloaded(OnlineMapsTile tile)
     {
-        if (useMemoryCache) AddMemoryCacheItem(tile);
+        if (useMemoryCache) AddMemoryCacheItem(tile, tile.www.bytes);
         if (useFileCache) AddFileCacheItem(tile, tile.www.bytes);
+    }
+
+    private void OnTrafficDownloaded(OnlineMapsTile tile)
+    {
+        if (useMemoryCache) AddMemoryCacheTrafficItem(tile, tile.trafficWWW.bytes);
     }
 
     private IEnumerator SaveFileCacheAtlas()
@@ -428,10 +434,17 @@ public class OnlineMapsCache:MonoBehaviour
         map.OnStartDownloadTile += OnStartDownloadTileM;
         map.OnPreloadTiles += OnPreloadTiles;
         OnlineMapsTile.OnTileDownloaded += OnTileDownloaded;
+        OnlineMapsTile.OnTrafficDownloaded += OnTrafficDownloaded;
     }
 
     private bool TryLoadFromCache(OnlineMapsTile tile)
     {
+        if (useMemoryCache && TryLoadFromMemoryCache(tile))
+        {
+            tile.MarkLoaded();
+            map.Redraw();
+            return true;
+        }
 #if ALLOW_FILECACHE
         if (useFileCache && TryLoadFromFileCache(tile))
         {
@@ -457,7 +470,7 @@ public class OnlineMapsCache:MonoBehaviour
 
             byte[] bytes = File.ReadAllBytes(fullTilePath);
             LoadTile(tile, bytes);
-            AddMemoryCacheItem(tile);
+            AddMemoryCacheItem(tile, bytes);
             if (OnLoadedFromFileCache != null) OnLoadedFromFileCache(tile);
             return true;
         }
@@ -465,11 +478,63 @@ public class OnlineMapsCache:MonoBehaviour
         return false;
     }
 
+    private bool TryLoadFromMemoryCache(OnlineMapsTile tile)
+    {
+        if (memoryCache == null) return false;
+
+        string key = GetTileKey(tile);
+        int keyHash = key.GetHashCode();
+
+        MemoryCacheItem item = null;
+        for (int itemIndex = 0; itemIndex < countMemoryItems; itemIndex++)
+        {
+            if (memoryCache[itemIndex].hash == keyHash && memoryCache[itemIndex].key == key)
+            {
+                item = memoryCache[itemIndex];
+                item.time = DateTime.Now.Ticks;
+                break;
+            }
+        }
+        if (item == null) return false;
+
+        LoadTile(tile, item.bytes);
+        if (OnLoadedFromMemoryCache != null) OnLoadedFromMemoryCache(tile);
+
+        return true;
+    }
+
+    private bool TryLoadTraffic(OnlineMapsTile tile)
+    {
+        if (memoryCache == null) return false;
+
+        string key = GetTrafficKey(tile);
+        int keyHash = key.GetHashCode();
+
+        MemoryCacheItem item = null;
+        for (int itemIndex = 0; itemIndex < countMemoryItems; itemIndex++)
+        {
+            if (memoryCache[itemIndex].hash == keyHash && memoryCache[itemIndex].key == key)
+            {
+                item = memoryCache[itemIndex];
+                item.time = DateTime.Now.Ticks;
+                break;
+            }
+        }
+        if (item == null) return false;
+
+        Texture2D trafficTexture = new Texture2D(256, 256, TextureFormat.RGB24, false);
+        trafficTexture.LoadImage(item.bytes);
+        trafficTexture.wrapMode = TextureWrapMode.Clamp;
+        tile.trafficTexture = trafficTexture;
+        map.Redraw();
+
+        return true;
+    }
+
     private void UnloadOldMemoryCacheItems()
     {
         int countUnload = Mathf.RoundToInt(countMemoryItems * memoryCacheUnloadRate);
-        if (countUnload == 0) return;
-        if (countUnload < 0) throw new Exception("Can not unload a negative number of items. Check memoryCacheUnloadRate.");
+        if (countUnload <= 0) throw new Exception("Can not unload a negative number of items. Check memoryCacheUnloadRate.");
         if (countMemoryItems < countUnload) countUnload = countMemoryItems;
 
         long[] unloadTimes = new long[countUnload];
@@ -515,11 +580,8 @@ public class OnlineMapsCache:MonoBehaviour
         for (int i = 0; i < countUnload; i++)
         {
             int index = unloadIndices[i];
-            MemoryCacheItem mci = memoryCache[index];
-            if (mci.tileUsed) continue;
-
-            _memoryCacheSize -= mci.size;
-            mci.Dispose();
+            _memoryCacheSize -= memoryCache[index].size;
+            memoryCache[index].Dispose();
             memoryCache[index] = null;
         }
 
@@ -775,31 +837,24 @@ public class OnlineMapsCache:MonoBehaviour
 
     private class MemoryCacheItem
     {
+        public byte[] bytes;
         public int size;
         public int hash;
         public string key;
         public long time;
-        private OnlineMapsTile tile;
 
-        public bool tileUsed
-        {
-            get { return tile.used; }
-        }
-
-        public MemoryCacheItem(string key, OnlineMapsTile tile)
+        public MemoryCacheItem(string key, byte[] bytes)
         {
             this.key = key;
             hash = key.GetHashCode();
-            size = 30000;
+            this.bytes = bytes;
+            size = bytes.Length;
             time = DateTime.Now.Ticks;
-            this.tile = tile;
-            tile.Block(this);
         }
 
         public void Dispose()
         {
-            tile.Unblock(this);
-            tile = null;
+            bytes = null;
             key = null;
         }
 

@@ -1,7 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
-/*   http://www.infinity-code.com   */
-
-using System;
+﻿using System;
 using System.Text;
 using UnityEngine;
 
@@ -110,18 +107,12 @@ public class OnlineMapsWhat3Words:OnlineMapsTextWebService
         return OnlineMapsJSON.Deserialize<OnlineMapsWhat3WordsGridResult>(response);
     }
 
-    [Obsolete("Fixed a typo. Use GetLanguagesResult.")]
-    public static OnlineMapsWhat3WordsLanguagesResult GetLanguadesResult(string response)
-    {
-        return GetLanguagesResult(response);
-    }
-
     /// <summary>
     /// Converts the response string from Get Languages to result object.
     /// </summary>
     /// <param name="response">Response string</param>
     /// <returns>Result object</returns>
-    public static OnlineMapsWhat3WordsLanguagesResult GetLanguagesResult(string response)
+    public static OnlineMapsWhat3WordsLanguagesResult GetLanguadesResult(string response)
     {
         return OnlineMapsJSON.Deserialize<OnlineMapsWhat3WordsLanguagesResult>(response);
     }
@@ -237,7 +228,7 @@ public class OnlineMapsWhat3Words:OnlineMapsTextWebService
         public void AppendURL(StringBuilder url)
         {
             url.Append("&clip=");
-            if (type == 0) url.Append("radius(").Append(v2).Append(",").Append(v1).Append(",").Append(v3).Append(")");
+            if (type == 0) url.Append("radius(").Append(v2).Append(",").Append(v1).Append(",").Append(v2).Append(")");
             else if (type == 1) url.Append("focus(").Append(v1).Append(")");
             else if (type == 2) url.Append("bbox(").Append(v2).Append(",").Append(v3).Append(",").Append(v4).Append(",").Append(v1).Append(")");
         }

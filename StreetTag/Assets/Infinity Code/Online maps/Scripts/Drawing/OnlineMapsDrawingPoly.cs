@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -177,13 +177,6 @@ public class OnlineMapsDrawingPoly : OnlineMapsDrawingElement
         this.backgroundColor = backgroundColor;
     }
 
-    protected override void DisposeLate()
-    {
-        base.DisposeLate();
-
-        _points = null;
-    }
-
     public override void Draw(Color32[] buffer, OnlineMapsVector2i bufferPosition, int bufferWidth, int bufferHeight, int zoom, bool invertY = false)
     {
         if (!visible) return;
@@ -204,8 +197,6 @@ public class OnlineMapsDrawingPoly : OnlineMapsDrawingElement
 
         InitMesh(control, "Poly", borderColor, backgroundColor);
         InitLineMesh(points, control, ref vertices, ref normals, ref triangles, ref uv, borderWidth, true, false);
-
-        mesh.Clear();
 
         if (vertices.Count < 4) return;
 
@@ -294,6 +285,7 @@ public class OnlineMapsDrawingPoly : OnlineMapsDrawingElement
             else fillTriangles = null;
         }
 
+        mesh.Clear();
         mesh.subMeshCount = 2;
 
 #if UNITY_4_6 || UNITY_4_7 || UNITY_5_0 || UNITY_5_1
@@ -316,6 +308,13 @@ public class OnlineMapsDrawingPoly : OnlineMapsDrawingElement
     {
         if (points == null) return false;
         return OnlineMapsUtils.IsPointInPolygon(points, positionLngLat.x, positionLngLat.y);
+    }
+
+    protected override void DisposeLate()
+    {
+        base.DisposeLate();
+
+        _points = null;
     }
 
     public override bool Validate()

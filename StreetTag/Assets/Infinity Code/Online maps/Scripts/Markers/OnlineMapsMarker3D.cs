@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -13,7 +13,10 @@ using Object = UnityEngine.Object;
 [Serializable]
 public class OnlineMapsMarker3D : OnlineMapsMarkerBase
 {
-    [Obsolete]
+    /// <summary>
+    /// Specifies whether to use a marker event for 3D markers. \n
+    /// Otherwise you will have to create their own events using MonoBehaviour.
+    /// </summary>
     public bool allowDefaultMarkerEvents;
 
     /// <summary>
@@ -251,9 +254,6 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
         return element;
     }
 
-    /// <summary>
-    /// Updates marker instance.
-    /// </summary>
     public override void Update()
     {
         double tlx, tly, brx, bry;
@@ -262,7 +262,7 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
     }
 
     /// <summary>
-    /// Updates marker instance.
+    /// Updates this object.
     /// </summary>
     /// <param name="topLeft">
     /// The top left coordinates.
@@ -278,14 +278,6 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
         Update(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, zoom);
     }
 
-    /// <summary>
-    /// Updates marker instance.
-    /// </summary>
-    /// <param name="tlx">Longitude of top-left corner of the map</param>
-    /// <param name="tly">Latitude of top-left corner of the map</param>
-    /// <param name="brx">Longitude of botton-right corner of the map</param>
-    /// <param name="bry">Latitude of botton-right corner of the map</param>
-    /// <param name="zoom">Zoom of the map</param>
     public override void Update(double tlx, double tly, double brx, double bry, int zoom)
     {
         if (!enabled) return;
@@ -357,11 +349,10 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
 
         if (altitude.HasValue)
         {
-            float yScale = control.GetBestElevationYScale(tlx, tly, brx, bry);
-            y = altitude.Value * yScale;
+            y = altitude.Value * control.GetBestElevationYScale(tlx, tly, brx, bry);
             if (tsControl != null)
             {
-                if (tsControl.elevationBottomMode == OnlineMapsTileSetControl.ElevationBottomMode.minValue) y -= tsControl.elevationMinValue * yScale;
+                if (tsControl.elevationBottomMode == OnlineMapsTileSetControl.ElevationBottomMode.minValue) y -= tsControl.elevationMinValue;
                 y *= tsControl.elevationScale;
             }
         }
@@ -379,22 +370,6 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
         }
     }
 
-    /// <summary>
-    /// Updates marker instance.
-    /// </summary>
-    /// <param name="map">Reference to the map</param>
-    /// <param name="control">Reference to the control</param>
-    /// <param name="bounds">Bounds of the map mesh</param>
-    /// <param name="tlx">Longitude of top-left corner of the map</param>
-    /// <param name="tly">Latitude of top-left corner of the map</param>
-    /// <param name="brx">Longitude of botton-right corner of the map</param>
-    /// <param name="bry">Latitude of botton-right corner of the map</param>
-    /// <param name="zoom">Zoom of the map</param>
-    /// <param name="ttlx">Tile X of top-left corner of the map</param>
-    /// <param name="ttly">Tile Y of top-left corner of the map</param>
-    /// <param name="tbrx">Tile X of botton-right corner of the map</param>
-    /// <param name="tbry">Tile Y of botton-right corner of the map</param>
-    /// <param name="bestYScale">Best y scale for current map view</param>
     public void Update(OnlineMaps map, OnlineMapsControlBase3D control, Bounds bounds, double tlx, double tly, double brx, double bry, int zoom, double ttlx, double ttly, double tbrx, double tbry, float bestYScale)
     {
         if (!enabled) return;
@@ -404,6 +379,12 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
         else if (checkMapBoundaries)
         {
             if (latitude > tly || latitude < bry) visible = false;
+            /*else if (Math.Abs(brx - tlx) < 1)
+            {
+                brx += 360;
+                tbrx += 1 << zoom;
+                visible = true;
+            }*/
             else if (tlx < brx && (longitude < tlx || longitude > brx)) visible = false;
             else if (tlx > brx && longitude < tlx && longitude > brx) visible = false;
             else visible = true;
@@ -422,6 +403,7 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
         double sx = tbrx - ttlx;
         double mpx = mx - ttlx;
         if (sx < 0) sx += maxX;
+        //else if (sx > maxX) sx -= maxX;
 
         if (checkMapBoundaries)
         {
@@ -464,7 +446,7 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
             y = altitude.Value * bestYScale;
             if (tsControl != null)
             {
-                if (tsControl.elevationBottomMode == OnlineMapsTileSetControl.ElevationBottomMode.minValue) y -= tsControl.elevationMinValue * bestYScale;
+                if (tsControl.elevationBottomMode == OnlineMapsTileSetControl.ElevationBottomMode.minValue) y -= tsControl.elevationMinValue;
                 y *= tsControl.elevationScale;
             }
         }
@@ -475,6 +457,10 @@ public class OnlineMapsMarker3D : OnlineMapsMarkerBase
 
         Vector3 newPosition = new Vector3((float)px, y, (float)pz);
 
-        if (oldPosition != newPosition) instance.transform.localPosition = newPosition;
+        if (oldPosition != newPosition)
+        {
+            instance.transform.localPosition = newPosition;
+            //if (OnPositionChanged != null) OnPositionChanged(this);
+        }
     }
 }

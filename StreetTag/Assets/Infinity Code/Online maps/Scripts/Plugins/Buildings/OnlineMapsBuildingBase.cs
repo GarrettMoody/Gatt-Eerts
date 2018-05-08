@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -72,14 +72,7 @@ public abstract class OnlineMapsBuildingBase:MonoBehaviour
     /// </summary>
     public float perimeter;
 
-    /// <summary>
-    /// Reference to OSM Way
-    /// </summary>
     public OnlineMapsOSMWay way;
-
-    /// <summary>
-    /// Reference to OSM Nodes list
-    /// </summary>
     public List<OnlineMapsOSMNode> nodes;
 
     private int lastTouchCount = 0;
@@ -210,8 +203,6 @@ public abstract class OnlineMapsBuildingBase:MonoBehaviour
 
     private bool HitTest()
     {
-        if (buildingCollider == null) return false;
-
         RaycastHit hit;
         OnlineMapsTileSetControl control = OnlineMapsTileSetControl.instance;
         return buildingCollider.Raycast(control.activeCamera.ScreenPointToRay(control.GetInputPosition()), out hit, OnlineMapsUtils.maxRaycastDistance);

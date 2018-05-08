@@ -1,9 +1,8 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace InfinityCode.OnlineMapsExamples
@@ -47,7 +46,7 @@ namespace InfinityCode.OnlineMapsExamples
         /// <summary>
         /// Array of route points
         /// </summary>
-        private OnlineMapsVector2d[] points;
+        private List<OnlineMapsVector2d> points;
 
         /// <summary>
         /// Current point index
@@ -68,23 +67,19 @@ namespace InfinityCode.OnlineMapsExamples
         private void OnComplete(string response)
         {
             Debug.Log("OnComplete");
-
-            OnlineMapsGoogleDirectionsResult result = OnlineMapsGoogleDirections.GetResult(response);
-            if (result == null || result.routes.Length == 0)
+            List<OnlineMapsDirectionStep> steps = OnlineMapsDirectionStep.TryParse(response);
+            if (steps == null)
             {
                 Debug.Log("Something wrong");
                 Debug.Log(response);
                 return;
             }
 
-            OnlineMapsGoogleDirectionsResult.Route firstRoute = result.routes[0];
-            List<OnlineMapsGoogleDirectionsResult.Step> steps = firstRoute.legs.SelectMany(l => l.steps).ToList();
-
             // Create a new marker in first point.
-            marker = OnlineMaps.instance.AddMarker(steps[0].start_location, "Car");
+            marker = OnlineMaps.instance.AddMarker(steps[0].start, "Car");
 
             // Gets points of route.
-            points = firstRoute.overview_polylineD;
+            points = OnlineMapsDirectionStep.GetPointsD(steps);
 
             // Draw the route.
             OnlineMapsDrawingLine route = new OnlineMapsDrawingLine(points, Color.red, 3);
@@ -130,7 +125,7 @@ namespace InfinityCode.OnlineMapsExamples
                 marker.SetPosition(position.x, position.y);
                 pointIndex++;
                 progress = 0;
-                if (pointIndex >= points.Length - 1)
+                if (pointIndex >= points.Count - 1)
                 {
                     Debug.Log("Finish");
                     pointIndex = -1;
@@ -138,7 +133,7 @@ namespace InfinityCode.OnlineMapsExamples
                 else
                 {
                     // Orient marker
-                    if (orientMarkerOnNextPoint) marker.rotation = 1.25f - OnlineMapsUtils.Angle2D(p2, points[pointIndex + 1]) / 360;
+                    if (orientMarkerOnNextPoint) marker.rotation = 1.25f - OnlineMapsUtils.Angle2D((Vector2)p2, points[pointIndex + 1]) / 360;
                 }
             }
 

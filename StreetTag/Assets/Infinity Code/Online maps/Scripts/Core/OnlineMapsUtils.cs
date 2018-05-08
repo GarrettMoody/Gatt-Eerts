@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -1535,23 +1535,6 @@ public static class OnlineMapsUtils
             quadKey.Append(digit);
         }
         return quadKey.ToString();
-    }
-
-    public static StringBuilder TileToQuadKey(int x, int y, int zoom, StringBuilder quadKey)
-    {
-        for (int i = zoom; i > 0; i--)
-        {
-            char digit = '0';
-            int mask = 1 << (i - 1);
-            if ((x & mask) != 0) digit++;
-            if ((y & mask) != 0)
-            {
-                digit++;
-                digit++;
-            }
-            quadKey.Append(digit);
-        }
-        return quadKey;
     }
 
     public static IEnumerable<int> Triangulate(List<Vector2> points)

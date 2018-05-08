@@ -1,11 +1,9 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 /// <summary>
@@ -63,8 +61,6 @@ public class OnlineMapsBuildings : MonoBehaviour
     /// </summary>
     public Action OnRequestComplete;
 
-    public Action OnRequestFailed;
-
     /// <summary>
     /// This event is triggered before show a building. \n
     /// Return TRUE - if you want to show this building, FALSE - do not show this building.
@@ -76,16 +72,10 @@ public class OnlineMapsBuildings : MonoBehaviour
     /// </summary>
     public static GameObject buildingContainer;
 
-    /// <summary>
-    /// Request rate for new buildings.
-    /// </summary>
     public static float requestRate = 0.1f;
 
     private static OnlineMapsBuildings _instance;
 
-    /// <summary>
-    /// Dictionary of visible buildings
-    /// </summary>
     [NonSerialized]
     public Dictionary<string, OnlineMapsBuildingBase> buildings;
 
@@ -115,11 +105,6 @@ public class OnlineMapsBuildings : MonoBehaviour
     public float heightScale = 1;
 
     /// <summary>
-    /// Need to generate a collider?
-    /// </summary>
-    public bool generateColliders = true;
-
-    /// <summary>
     /// Materials of buildings.
     /// </summary>
     public OnlineMapsBuildingMaterial[] materials;
@@ -133,11 +118,6 @@ public class OnlineMapsBuildings : MonoBehaviour
     /// The maximum number of buildings (0 - unlimited).
     /// </summary>
     public int maxBuilding = 0;
-
-    /// <summary>
-    /// Use the Color tag for buildings?
-    /// </summary>
-    public bool useColorTag = true;
     
     private OnlineMapsVector2i topLeft;
     private OnlineMapsVector2i bottomRight;
@@ -148,12 +128,9 @@ public class OnlineMapsBuildings : MonoBehaviour
     private bool sendBuildingsReceived = false;
     private string requestData;
     private float lastRequestTime;
-    private OnlineMapsOSMAPIQuery osmRequest;
 
-    private double prevUpdateTLX;
-    private double prevUpdateTLY;
-    private double prevUpdateBRX;
-    private double prevUpdateBRY;
+    [NonSerialized]
+    private OnlineMapsOSMAPIQuery osmRequest;
 
     private static OnlineMaps map
     {
@@ -176,10 +153,6 @@ public class OnlineMapsBuildings : MonoBehaviour
         get { return buildings.Select(b => b.Value); }
     }
 
-    /// <summary>
-    /// Creates a new building based on data
-    /// </summary>
-    /// <param name="data">Building data</param>
     public void CreateBuilding(OnlineMapsBuildingsNodeData data)
     {
         if (OnCreateBuilding != null && !OnCreateBuilding(data)) return;
@@ -198,7 +171,7 @@ public class OnlineMapsBuildings : MonoBehaviour
         }
         else
         {
-            //Debug.Log("Null building");
+            Debug.Log("Null building");
         }
     }
 
@@ -223,11 +196,10 @@ public class OnlineMapsBuildings : MonoBehaviour
         enabled = true;
     }
 
-    private bool GenerateBuildings()
+    private void GenerateBuildings()
     {
         long startTicks = DateTime.Now.Ticks;
         const int maxTicks = 500000;
-        bool hasNewBuildings = false;
 
         lock (newBuildingsData)
         {
@@ -240,128 +212,114 @@ public class OnlineMapsBuildings : MonoBehaviour
                 newBuildingIndex--;
                 OnlineMapsBuildingsNodeData data = newBuildingsData.Dequeue();
                 CreateBuilding(data);
-                hasNewBuildings = true;
 
                 data.Dispose();
 
                 if (DateTime.Now.Ticks - startTicks > maxTicks) break;
             }
-            if (needCreate > 0 && 
-                (newBuildingIndex == 0 || (maxBuilding > 0 && unusedBuildings.Count + buildings.Count >= maxBuilding)) && 
-                OnAllBuildingsCreated != null) OnAllBuildingsCreated();
+            if (needCreate > 0 && newBuildingIndex == 0 && OnAllBuildingsCreated != null) OnAllBuildingsCreated();
         }
 
         OnlineMapsBuildingBase.roofIndices = null;
-        return hasNewBuildings;
     }
 
-    private void MoveRelationToWay(OnlineMapsOSMRelation relation, Dictionary<string, OnlineMapsOSMWay> ways, List<string> waysInRelation, Dictionary<string, OnlineMapsOSMNode> nodes)
+    private OnlineMapsOSMWay GetWayByID(List<OnlineMapsOSMWay> ways, string id)
     {
-        if (relation.members.Count == 0) return;
-
-        OnlineMapsOSMWay way = new OnlineMapsOSMWay();
-        List<string> nodeRefs = new List<string>();
-
-        List<OnlineMapsOSMRelationMember> members = relation.members.Where(m => m.type == "way" && m.role == "outer").ToList();
-        if (members.Count == 0) return;
-
-        OnlineMapsOSMWay relationWay;
-        if (!ways.TryGetValue(members[0].reference, out relationWay) || relationWay == null) return;
-
-        nodeRefs.AddRange(relationWay.nodeRefs);
-        members.RemoveAt(0);
-
-        while (members.Count > 0)
-        {
-            if (!MoveRelationMemberToWay(nodeRefs, members, ways)) break;
-        }
-
-        waysInRelation.AddRange(relation.members.Select(m => m.reference));
-        way.nodeRefs = nodeRefs;
-        way.id = relation.id;
-        way.tags = relation.tags;
-        newBuildingsData.Enqueue(new OnlineMapsBuildingsNodeData(way, nodes));
+        for (int i = 0; i < ways.Count; i++) if (ways[i].id == id) return ways[i];
+        return null;
     }
 
-    private static bool MoveRelationMemberToWay(List<string> nodeRefs, List<OnlineMapsOSMRelationMember> members, Dictionary<string, OnlineMapsOSMWay> ways)
+    private void LoadNewBuildings()
     {
-        string lastRef = nodeRefs[nodeRefs.Count - 1];
+        double tlx, tly, brx, bry;
+        map.projection.TileToCoordinates(topLeft.x, topLeft.y, map.zoom, out tlx, out tly);
+        map.projection.TileToCoordinates(bottomRight.x, bottomRight.y, map.zoom, out brx, out bry);
 
-        int memberIndex = -1;
-        for (int i = 0; i < members.Count; i++)
-        {
-            OnlineMapsOSMRelationMember member = members[i];
-            OnlineMapsOSMWay w = ways[member.reference];
-            if (w.nodeRefs[0] == lastRef)
-            {
-                nodeRefs.AddRange(w.nodeRefs.Skip(1));
-                memberIndex = i;
-                break;
-            }
-            if (w.nodeRefs[w.nodeRefs.Count - 1] == lastRef)
-            {
-                List<string> refs = w.nodeRefs;
-                refs.Reverse();
-                nodeRefs.AddRange(refs.Skip(1));
-                memberIndex = i;
-                break;
-            }
-        }
-
-        if (memberIndex != -1) members.RemoveAt(memberIndex);
-        else return false;
-        return true;
+        requestData = String.Format("(way[{4}]({0},{1},{2},{3});relation[{4}]({0},{1},{2},{3}););out;>;out skel qt;", bry, tlx, tly, brx, "'building'");
+        if (OnPrepareRequest != null) requestData = OnPrepareRequest(requestData, new Vector2((float)tlx, (float)tly), new Vector2((float)brx, (float)bry));
     }
 
-    private void MoveRelationsToWays(List<OnlineMapsOSMRelation> relations, Dictionary<string, OnlineMapsOSMWay> ways, Dictionary<string, OnlineMapsOSMNode> nodes)
-    {
-        List<string> waysInRelation = new List<string>();
-
-        foreach (OnlineMapsOSMRelation relation in relations) MoveRelationToWay(relation, ways, waysInRelation, nodes);
-
-        foreach (string id in waysInRelation)
-        {
-            if (!ways.ContainsKey(id)) continue;
-
-            OnlineMapsOSMWay way = ways[id];
-            way.Dispose();
-            ways.Remove(id);
-        }
-
-        foreach (KeyValuePair<string, OnlineMapsOSMWay> pair in ways)
-        {
-            newBuildingsData.Enqueue(new OnlineMapsBuildingsNodeData(pair.Value, nodes));
-        }
-    }
-
-    private void OnBuildingRequestFailed(OnlineMapsTextWebService request)
+    private void OnBuildingRequestComplete(string response)
     {
         osmRequest = null;
-        if (OnRequestFailed != null) OnRequestFailed();
-    }
-
-    private void OnBuildingRequestSuccess(OnlineMapsTextWebService request)
-    {
-        osmRequest = null;
-
-        string response = request.response;
-        if (response.Length < 300)
-        {
-            if (OnRequestFailed != null) OnRequestFailed();
-            return;
-        }
 
         Action action = () =>
         {
             Dictionary<string, OnlineMapsOSMNode> nodes;
-            Dictionary<string, OnlineMapsOSMWay> ways;
+            List<OnlineMapsOSMWay> ways;
             List<OnlineMapsOSMRelation> relations;
 
             OnlineMapsOSMAPIQuery.ParseOSMResponseFast(response, out nodes, out ways, out relations);
 
             lock (newBuildingsData)
             {
-                MoveRelationsToWays(relations, ways, nodes);
+                List<string> waysInRelation = new List<string>();
+                foreach (OnlineMapsOSMRelation relation in relations)
+                {
+                    if (relation.members.Count == 0) continue;
+
+                    OnlineMapsOSMWay way = new OnlineMapsOSMWay();
+                    List<string> nodeRefs = new List<string>();
+
+                    List<OnlineMapsOSMRelationMember> members = relation.members.Where(m => m.type == "way" && m.role == "outer").ToList();
+                    if (members.Count == 0) continue;
+
+                    OnlineMapsOSMWay relationWay = GetWayByID(ways, members[0].reference);
+                    if (relationWay == null) continue;
+                    
+                    nodeRefs.AddRange(relationWay.nodeRefs);
+                    members.RemoveAt(0);
+
+                    while (members.Count > 0)
+                    {
+                        string lastRef = nodeRefs[nodeRefs.Count - 1];
+
+                        int memberIndex = -1;
+                        for (int i = 0; i < members.Count; i++)
+                        {
+                            OnlineMapsOSMRelationMember member = members[i];
+                            OnlineMapsOSMWay w = GetWayByID(ways, member.reference);
+                            if (w.nodeRefs[0] == lastRef)
+                            {
+                                nodeRefs.AddRange(w.nodeRefs.Skip(1));
+                                memberIndex = i;
+                                break;
+                            }
+                            if (w.nodeRefs[w.nodeRefs.Count - 1] == lastRef)
+                            {
+                                List<string> refs = w.nodeRefs;
+                                refs.Reverse();
+                                nodeRefs.AddRange(refs.Skip(1));
+                                memberIndex = i;
+                                break;
+                            }
+                        }
+
+                        if (memberIndex != -1) members.RemoveAt(memberIndex);
+                        else break;
+                    }
+
+                    waysInRelation.AddRange(relation.members.Select(m => m.reference));
+                    way.nodeRefs = nodeRefs;
+                    way.id = relation.id;
+                    way.tags = relation.tags;
+                    newBuildingsData.Enqueue(new OnlineMapsBuildingsNodeData(way, nodes));
+                }
+
+                ways.RemoveAll(delegate(OnlineMapsOSMWay w)
+                {
+                    if (waysInRelation.Contains(w.id))
+                    {
+                        w.Dispose();
+                        return true;
+                    }
+                    return false;
+                });
+
+                foreach (OnlineMapsOSMWay way in ways)
+                {
+                    newBuildingsData.Enqueue(new OnlineMapsBuildingsNodeData(way, nodes));
+                }
             }
 
             sendBuildingsReceived = true;
@@ -407,23 +365,12 @@ public class OnlineMapsBuildings : MonoBehaviour
         if (map != null) Start();
     }
 
-    private void RequestNewBuildings()
-    {
-        double tlx, tly, brx, bry;
-        map.projection.TileToCoordinates(topLeft.x, topLeft.y, map.zoom, out tlx, out tly);
-        map.projection.TileToCoordinates(bottomRight.x, bottomRight.y, map.zoom, out brx, out bry);
-
-        requestData = String.Format("(way[{4}]({0},{1},{2},{3});relation[{4}]({0},{1},{2},{3}););out;>;out skel qt;", bry, tlx, tly, brx, "'building'");
-        if (OnPrepareRequest != null) requestData = OnPrepareRequest(requestData, new Vector2((float)tlx, (float)tly), new Vector2((float)brx, (float)bry));
-    }
-
     private void SendRequest()
     {
         if (osmRequest != null || string.IsNullOrEmpty(requestData)) return;
 
         osmRequest = OnlineMapsOSMAPIQuery.Find(requestData);
-        osmRequest.OnSuccess += OnBuildingRequestSuccess;
-        osmRequest.OnFailed += OnBuildingRequestFailed;
+        osmRequest.OnComplete += OnBuildingRequestComplete;
         if (OnRequestSent != null) OnRequestSent();
         lastRequestTime = Time.time;
         requestData = null;
@@ -467,16 +414,11 @@ public class OnlineMapsBuildings : MonoBehaviour
             sendBuildingsReceived = false;
         }
 
-        bool hasNewBuildings = GenerateBuildings();
-        UpdateBuildings(hasNewBuildings);
+        GenerateBuildings();
+        UpdateBuildings();
     }
 
     private void UpdateBuildings()
-    {
-        UpdateBuildings(true);
-    }
-
-    private void UpdateBuildings(bool updatePosition)
     {
         if (!zoomRange.InRange(map.zoom))
         {
@@ -494,23 +436,12 @@ public class OnlineMapsBuildings : MonoBehaviour
         {
             topLeft = newTopLeft;
             bottomRight = newBottomRight;
-            RequestNewBuildings();
+            LoadNewBuildings();
         }
 
         if (lastRequestTime + requestRate < Time.time) SendRequest();
 
-        if (updatePosition ||
-            Math.Abs(prevUpdateTLX - tlx) > double.Epsilon || 
-            Math.Abs(prevUpdateTLY - tly) > double.Epsilon || 
-            Math.Abs(prevUpdateBRX - brx) > double.Epsilon || 
-            Math.Abs(prevUpdateBRY - bry) > double.Epsilon)
-        {
-            prevUpdateTLX = tlx;
-            prevUpdateTLY = tly;
-            prevUpdateBRX = brx;
-            prevUpdateBRY = bry;
-            UpdateBuildingsPosition();
-        }
+        UpdateBuildingsPosition();
     }
 
     private void UpdateBuildingsPosition()

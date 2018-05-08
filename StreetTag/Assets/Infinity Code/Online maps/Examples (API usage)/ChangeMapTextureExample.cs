@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using UnityEngine;
@@ -11,7 +11,6 @@ namespace InfinityCode.OnlineMapsExamples
     [AddComponentMenu("Infinity Code/Online Maps/Examples (API Usage)/ChangeMapTextureExample")]
     public class ChangeMapTextureExample : MonoBehaviour
     {
-#if !UNITY_2017_2_OR_NEWER || ONLINEMAPS_GUITEXTURE
         // Original texture
         private Texture2D texture1;
 
@@ -62,6 +61,5 @@ namespace InfinityCode.OnlineMapsExamples
 
             gt.pixelInset = new Rect(texture1.width / -2, texture1.height / -2, texture1.width, texture1.height);
         }
-#endif
     }
 }

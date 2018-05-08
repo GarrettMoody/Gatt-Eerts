@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 #if !UNITY_4_6 && !UNITY_4_7
@@ -325,10 +325,11 @@ public class OnlineMapsEditor : Editor
             Type[] types = api.GetType().Assembly.GetTypes();
             foreach (Type t in types)
             {
-                if (t.IsSubclassOf(typeof (OnlineMapsControlBase)) && !t.IsAbstract)
+                if (t.IsSubclassOf(typeof (OnlineMapsControlBase)))
                 {
-                    string fullName = t.FullName;
-                    if (fullName.StartsWith("OnlineMaps")) fullName = fullName.Substring(10);
+                    if (t == typeof (OnlineMapsControlBase2D) || t == typeof (OnlineMapsControlBase3D)) continue;
+
+                    string fullName = t.FullName.Substring(10);
 
                     int controlIndex = fullName.IndexOf("Control");
                     fullName = fullName.Insert(controlIndex, " ");
@@ -387,13 +388,11 @@ public class OnlineMapsEditor : Editor
                 SpriteRenderer spriteRenderer = api.GetComponent<SpriteRenderer>();
                 spriteRenderer.sprite = AssetDatabase.LoadAssetAtPath(texturePath, typeof(Sprite)) as Sprite;
             }
-#if !UNITY_2017_2_OR_NEWER || ONLINEMAPS_GUITEXTURE
             else if (control is OnlineMapsGUITextureControl)
             {
                 GUITexture gt = api.GetComponent<GUITexture>();
                 gt.texture = newTexture;
             }
-#endif
             else if (control is OnlineMapsUIImageControl)
             {
                 Image img = api.GetComponent<Image>();
@@ -471,7 +470,7 @@ public class OnlineMapsEditor : Editor
     {
         if (pSource.enumValueIndex == (int)OnlineMapsSource.Resources || !GUILayout.Button("Cache tiles to Resources")) return;
 
-        lock (OnlineMapsTile.lockTiles)
+        lock (OnlineMapsTile.tiles)
         {
             const string resPath = "Assets/Resources";
 
@@ -528,7 +527,7 @@ public class OnlineMapsEditor : Editor
     {
         bool dirty = false;
 
-        DrawSourceGUI(ref dirty);
+        DrawSourceGUI();
         DrawLocationGUI(ref dirty);
         DrawTargetGUI();
 
@@ -615,7 +614,7 @@ public class OnlineMapsEditor : Editor
             OnlineMapsMarkerPropertyDrawer.isRemoved = false;
             EditorGUILayout.PropertyField(pMarkers.GetArrayElementAtIndex(i), new GUIContent("Marker " + (i + 1)));
             if (OnlineMapsMarkerPropertyDrawer.isRemoved) removedIndex = i;
-            EditorGUILayout.EndVertical();
+            EditorGUILayout.EndHorizontal();
         }
         if (EditorGUI.EndChangeCheck()) dirty = true;
 
@@ -687,25 +686,24 @@ public class OnlineMapsEditor : Editor
         }
     }
 
-    private void DrawProviderExtraFields(ref bool dirty, OnlineMapsProvider.IExtraField[] extraFields)
+    private void DrawProviderExtraFields()
     {
+        OnlineMapsProvider.IExtraField[] extraFields = mapType.provider.extraFields;
         if (extraFields == null) return;
 
         foreach (OnlineMapsProvider.IExtraField field in extraFields)
         {
-            if (field is OnlineMapsProvider.ToggleExtraGroup) DrawProviderToggleExtraGroup(field as OnlineMapsProvider.ToggleExtraGroup, ref dirty);
-            else if (field is OnlineMapsProvider.ExtraField) DrawProviderExtraField(field as OnlineMapsProvider.ExtraField, ref dirty);
+            if (field is OnlineMapsProvider.ToggleExtraGroup) DrawProviderToggleExtraGroup(field as OnlineMapsProvider.ToggleExtraGroup);
+            else if (field is OnlineMapsProvider.ExtraField) DrawProviderExtraField(field as OnlineMapsProvider.ExtraField);
         }
     }
 
-    private void DrawProviderExtraField(OnlineMapsProvider.ExtraField field, ref bool dirty)
+    private void DrawProviderExtraField(OnlineMapsProvider.ExtraField field)
     {
-        EditorGUI.BeginChangeCheck();
         field.value = EditorGUILayout.TextField(field.title, field.value);
-        if (EditorGUI.EndChangeCheck()) dirty = true;
     }
 
-    private void DrawProviderToggleExtraGroup(OnlineMapsProvider.ToggleExtraGroup @group, ref bool dirty)
+    private void DrawProviderToggleExtraGroup(OnlineMapsProvider.ToggleExtraGroup group)
     {
         group.value = EditorGUILayout.Toggle(group.title, group.value);
         EditorGUI.BeginDisabledGroup(group.value);
@@ -714,8 +712,8 @@ public class OnlineMapsEditor : Editor
         {
             foreach (OnlineMapsProvider.IExtraField field in group.fields)
             {
-                if (field is OnlineMapsProvider.ToggleExtraGroup) DrawProviderToggleExtraGroup(field as OnlineMapsProvider.ToggleExtraGroup, ref dirty);
-                else if (field is OnlineMapsProvider.ExtraField) DrawProviderExtraField(field as OnlineMapsProvider.ExtraField, ref dirty);
+                if (field is OnlineMapsProvider.ToggleExtraGroup) DrawProviderToggleExtraGroup(field as OnlineMapsProvider.ToggleExtraGroup);
+                else if (field is OnlineMapsProvider.ExtraField) DrawProviderExtraField(field as OnlineMapsProvider.ExtraField);
             }
         }
 
@@ -776,7 +774,7 @@ public class OnlineMapsEditor : Editor
         EditorGUILayout.EndVertical();
     }
 
-    private void DrawSourceGUI(ref bool dirty)
+    private void DrawSourceGUI()
     {
         EditorGUI.BeginDisabledGroup(isPlay);
 
@@ -832,8 +830,7 @@ public class OnlineMapsEditor : Editor
                 }
             }
 
-            DrawProviderExtraFields(ref dirty, mapType.provider.extraFields);
-            DrawProviderExtraFields(ref dirty, mapType.extraFields);
+            DrawProviderExtraFields();
             DrawLabelsGUI();
         }
     }
@@ -874,19 +871,8 @@ public class OnlineMapsEditor : Editor
         /*if (pTilesetWidth.intValue % dts != 0) pTilesetWidth.intValue = Mathf.FloorToInt(pTilesetWidth.intValue / (float) dts + 0.5f) * dts;
         if (pTilesetHeight.intValue % dts != 0) pTilesetHeight.intValue = Mathf.FloorToInt(pTilesetHeight.intValue / (float) dts + 0.5f) * dts;*/
 
-        if (pTilesetWidth.intValue % 256 != 0)
-        {
-            EditorGUILayout.HelpBox("Width is not equal to 256 * N, the map will not work correctly.", MessageType.Error);
-            if (GUILayout.Button("Fix Width")) pTilesetWidth.intValue = Mathf.NextPowerOfTwo(pTilesetWidth.intValue);
-        }
-        else if (pTilesetHeight.intValue % 256 != 0)
-        {
-            EditorGUILayout.HelpBox("Height is not equal to 256 * N, the map will not work correctly.", MessageType.Error);
-            if (GUILayout.Button("Fix Height")) pTilesetHeight.intValue = Mathf.NextPowerOfTwo(pTilesetHeight.intValue);
-        }
-
-        if (pTilesetWidth.intValue <= 256) pTilesetWidth.intValue = dts;
-        if (pTilesetHeight.intValue <= 256) pTilesetHeight.intValue = dts;
+        if (pTilesetWidth.intValue <= 128) pTilesetWidth.intValue = dts;
+        if (pTilesetHeight.intValue <= 128) pTilesetHeight.intValue = dts;
     }
 
     private void DrawToolbarGUI()

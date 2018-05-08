@@ -1,12 +1,10 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
-using System;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 /// <summary>
 /// Provider of tiles.
@@ -71,11 +69,6 @@ public class OnlineMapsProvider
     public string prop;
 
     /// <summary>
-    /// Property. Token {prop2}, that is being replaced in the URL.
-    /// </summary>
-    public string prop2;
-
-    /// <summary>
     /// Indicates that the provider uses two letter language code.
     /// </summary>
     public bool twoLetterLanguage = true;
@@ -85,14 +78,6 @@ public class OnlineMapsProvider
 
     private string _url;
     private MapType[] _types;
-
-    /// <summary>
-    /// Array of map types available for the current provider.
-    /// </summary>
-    public MapType[] types
-    {
-        get { return _types; }
-    }
 
     /// <summary>
     /// Gets / sets the URL pattern of tiles.
@@ -120,18 +105,11 @@ public class OnlineMapsProvider
     }
 
     /// <summary>
-    /// Creates a new provider, with the specified title.
+    /// Array of map types available for the current provider.
     /// </summary>
-    /// <param name="title">Provider title. Provider id = title.ToLower().</param>
-    /// <returns>Instance of provider</returns>
-    public static OnlineMapsProvider Create(string title)
+    public MapType[] types
     {
-        OnlineMapsProvider provider = new OnlineMapsProvider(title);
-        provider._types = new MapType[0];
-        if (providers == null) InitProviders();
-        Array.Resize(ref providers, providers.Length + 1);
-        providers[providers.Length - 1] = provider;
-        return provider;
+        get { return _types; }
     }
 
     /// <summary>
@@ -164,6 +142,19 @@ public class OnlineMapsProvider
             }
         }
         return providers[0].types[0];
+    }
+
+    /// <summary>
+    /// Gets map type by index.
+    /// </summary>
+    /// <param name="index">Index of map type.</param>
+    /// <param name="repeat">TRUE - Repeat index value, FALSE - Clamp index value.</param>
+    /// <returns>Instance of map type.</returns>
+    public MapType GetByIndex(int index, bool repeat = false)
+    {
+        if (repeat) index = Mathf.RoundToInt(Mathf.Repeat(index, _types.Length - 1));
+        else index = Mathf.Clamp(index, 0, _types.Length);
+        return _types[index];
     }
 
     /// <summary>
@@ -255,7 +246,7 @@ public class OnlineMapsProvider
                     new MapType(SATELLITE)
                     {
                         urlWithLabels = "https://mt{rnd0-3}.googleapis.com/vt/lyrs=y&hl={lng}&x={x}&y={y}&z={zoom}",
-                        urlWithoutLabels = "https://khm{rnd0-3}.googleapis.com/kh?v=742&hl={lng}&x={x}&y={y}&z={zoom}",
+                        urlWithoutLabels = "https://khm{rnd0-3}.googleapis.com/kh?v=726&hl={lng}&x={x}&y={y}&z={zoom}",
                     },
                     new MapType(RELIEF)
                     {
@@ -275,32 +266,6 @@ public class OnlineMapsProvider
                     new MapType("Full") { variantWithLabels = "full" },
                     new MapType("Base") { variantWithLabels = "base" },
                     new MapType("RoadsAndLabels") { variantWithLabels = "roads_and_labels" },
-                }
-            },
-            new OnlineMapsProvider("Mapbox")
-            {
-                labelsEnabled = false,
-
-                _types = new []
-                {
-                    new MapType("Map")
-                    {
-                        urlWithLabels = "https://api.mapbox.com/styles/v1/{userid}/{mapid}/tiles/256/{z}/{x}/{y}?access_token={accesstoken}",
-                        extraFields = new []
-                        {
-                            new ExtraField("User ID", "userid"),
-                            new ExtraField("Map ID", "mapid"),
-                        }
-                    },
-                    new MapType("Satellite")
-                    {
-                        urlWithoutLabels = "https://a.tiles.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.png?access_token={accesstoken}"
-                    }
-                },
-
-                extraFields = new []
-                {
-                    new ExtraField("Access Token", "accesstoken"),
                 }
             },
             new OnlineMapsProvider("Mapbox classic")
@@ -350,12 +315,11 @@ public class OnlineMapsProvider
             }, 
             new OnlineMapsProvider("nokia", "Nokia Maps (here.com)")
             {
-                url = "https://{rnd1-4}.{prop2}.maps.cit.api.here.com/maptile/2.1/{prop}/newest/{variant}/{zoom}/{x}/{y}/256/png8?lg={lng}&app_id={appid}&app_code={appcode}",
+                url = "https://{rnd1-4}.maps.nlp.nokia.com/maptile/2.1/{prop}/newest/{variant}/{zoom}/{x}/{y}/256/png8?lg={lng}&app_id={appid}&app_code={appcode}",
                 twoLetterLanguage = false,
                 hasLanguage = true,
                 labelsEnabled = true,
                 prop = "maptile",
-                prop2 = "base",
 
                 _types = new []
                 {
@@ -363,13 +327,11 @@ public class OnlineMapsProvider
                     {
                         variantWithLabels = "hybrid.day",
                         variantWithoutLabels = "satellite.day",
-                        prop2 = "aerial",
                     },
                     new MapType(TERRAIN)
                     {
                         variant = "terrain.day",
                         propWithoutLabels = "basetile",
-                        prop2 = "aerial",
                     },
                     new MapType(MAP)
                     {
@@ -426,6 +388,11 @@ public class OnlineMapsProvider
                         variant = "normal.night.grey.mobile",
                         propWithoutLabels = "basetile",
                     },
+                    new MapType("carnavDayGrey")
+                    {
+                        variantWithLabels = "carnav.day.grey",
+                        propWithoutLabels = "basetile",
+                    },
                     new MapType("pedestrianDay")
                     {
                         variantWithLabels = "pedestrian.day"
@@ -475,7 +442,7 @@ public class OnlineMapsProvider
             },
             new OnlineMapsProvider("OpenWeatherMap")
             {
-                url = "https://tile.openweathermap.org/map/{variant}/{z}/{x}/{y}.png?appid={apikey}",
+                url = "http://a.tile.openweathermap.org/map/{variant}/{z}/{x}/{y}.png",
                 _types = new []
                 {
                     new MapType("Clouds") { variantWithoutLabels = "clouds" },
@@ -489,10 +456,6 @@ public class OnlineMapsProvider
                     new MapType("Wind") { variantWithoutLabels = "wind" },
                     new MapType("Temperature") { variantWithoutLabels = "temp" },
                     new MapType("Snow") { variantWithoutLabels = "snow" },
-                },
-                extraFields = new []
-                {
-                    new ExtraField("API key", "apikey"),
                 }
             },
             new OnlineMapsProvider("Stamen")
@@ -511,7 +474,7 @@ public class OnlineMapsProvider
             },
             new OnlineMapsProvider("Thunderforest")
             {
-                url = "https://a.tile.thunderforest.com/{variant}/{z}/{x}/{y}.png?apikey={apikey}",
+                url = "https://a.tile.thunderforest.com/{variant}/{z}/{x}/{y}.png",
                 _types = new []
                 {
                     new MapType("OpenCycleMap") { variantWithLabels = "cycle" },
@@ -521,14 +484,6 @@ public class OnlineMapsProvider
                     new MapType("Landscape") { variantWithLabels = "landscape" },
                     new MapType("Outdoors") { variantWithLabels = "outdoors" },
                     new MapType("Pioneer") { variantWithLabels = "pioneer" },
-                },
-
-                extraFields = new []
-                {
-                    new ToggleExtraGroup("Anonymous", true, new []
-                    {
-                        new ExtraField("API key", "apikey", "6170aad10dfd42a38d4d8c709a536f38")
-                    })
                 }
             },
             new OnlineMapsProvider("TianDiTu")
@@ -644,35 +599,6 @@ public class OnlineMapsProvider
     }
 
     /// <summary>
-    /// Appends map types to the provider.
-    /// </summary>
-    /// <param name="newTypes">Map types</param>
-    public void AppendTypes(params MapType[] newTypes)
-    {
-        int l = _types.Length;
-        Array.Resize(ref _types, l + newTypes.Length);
-        for (int i = 0; i < newTypes.Length; i++)
-        {
-            MapType type = _types[l + i] = newTypes[i];
-            type.provider = this;
-            type.fullID = id + "." + type.id;
-        }
-    }
-
-    /// <summary>
-    /// Gets map type by index.
-    /// </summary>
-    /// <param name="index">Index of map type.</param>
-    /// <param name="repeat">TRUE - Repeat index value, FALSE - Clamp index value.</param>
-    /// <returns>Instance of map type.</returns>
-    public MapType GetByIndex(int index, bool repeat = false)
-    {
-        if (repeat) index = Mathf.RoundToInt(Mathf.Repeat(index, _types.Length - 1));
-        else index = Mathf.Clamp(index, 0, _types.Length);
-        return _types[index];
-    }
-
-    /// <summary>
     /// Class of map type
     /// </summary>
     public class MapType
@@ -681,8 +607,6 @@ public class OnlineMapsProvider
         /// ID of map type
         /// </summary>
         public readonly string id;
-
-        public IExtraField[] extraFields;
 
         public string fullID;
 
@@ -720,7 +644,6 @@ public class OnlineMapsProvider
         private string _variantWithoutLabels;
         private string _propWithLabels;
         private string _propWithoutLabels;
-        private string _prop2;
         private bool? _logUrl;
 
         /// <summary>
@@ -824,15 +747,6 @@ public class OnlineMapsProvider
                 hasWithoutLabels = true;
                 if (hasWithLabels) hasLabels = true;
             }
-        }
-
-        /// <summary>
-        /// Property. Token {prop2}, that is being replaced in the URL.
-        /// </summary>
-        public string prop2
-        {
-            get { return string.IsNullOrEmpty(_prop2)? provider.prop2: _prop2; }
-            set { _prop2 = value; }
         }
 
         /// <summary>
@@ -947,11 +861,10 @@ public class OnlineMapsProvider
 
         public string GetSettings()
         {
-            if (provider.extraFields == null && extraFields == null) return null;
+            if (provider.extraFields == null) return null;
 
             StringBuilder builder = new StringBuilder();
-            if (extraFields != null) foreach (IExtraField field in extraFields) field.SaveSettings(builder);
-            if (provider.extraFields != null) foreach (IExtraField field in provider.extraFields) field.SaveSettings(builder);
+            foreach (IExtraField field in provider.extraFields) field.SaveSettings(builder);
             return builder.ToString();
         }
 
@@ -995,7 +908,6 @@ public class OnlineMapsProvider
                 if (v == "lng") return tile.language;
                 if (v == "ext") return ext;
                 if (v == "prop") return labels ? propWithLabels : propWithoutLabels;
-                if (v == "prop2") return prop2;
                 if (v == "variant") return labels ? variantWithLabels : variantWithoutLabels;
                 if (TryUseExtraFields(ref v)) return v;
                 return v;
@@ -1010,9 +922,10 @@ public class OnlineMapsProvider
             return url;
         }
 
-        private void TryLoadExtraFields(string settings, IExtraField[] fields)
+        public void LoadSettings(string settings)
         {
-            if (fields == null) return;
+            IExtraField[] fields = provider.extraFields;
+            if (fields == null || string.IsNullOrEmpty(settings)) return;
 
             int i = 0;
             while (i < settings.Length)
@@ -1032,41 +945,18 @@ public class OnlineMapsProvider
             }
         }
 
-        public void LoadSettings(string settings)
-        {
-            if (string.IsNullOrEmpty(settings)) return;
-
-            TryLoadExtraFields(settings, extraFields);
-            TryLoadExtraFields(settings, provider.extraFields);
-        }
-
         private bool TryUseExtraFields(ref string token)
         {
-            if (extraFields != null)
-            {
-                foreach (IExtraField field in extraFields)
-                {
-                    string value;
-                    if (field.GetTokenValue(token, false, out value))
-                    {
-                        token = value;
-                        return true;
-                    }
-                }
-            }
-            if (provider.extraFields != null)
-            {
-                foreach (IExtraField field in provider.extraFields)
-                {
-                    string value;
-                    if (field.GetTokenValue(token, false, out value))
-                    {
-                        token = value;
-                        return true;
-                    }
-                }
+            if (provider.extraFields == null) return false;
 
-                return false;
+            foreach (IExtraField field in provider.extraFields)
+            {
+                string value;
+                if (field.GetTokenValue(token, false, out value))
+                {
+                    token = value;
+                    return true;
+                }
             }
 
             return false;

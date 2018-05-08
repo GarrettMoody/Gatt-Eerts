@@ -1,11 +1,10 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 /// <summary>
 /// Class implements the basic functionality control of the 3D map.
@@ -55,7 +54,9 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
     /// </summary>
     public bool allowAddMarker3DByN = true;
 
-    [Obsolete]
+    /// <summary>
+    /// Specifies whether to use markers event for 3D markers.
+    /// </summary>
     public bool allowDefaultMarkerEvents = true;
 
     /// <summary>
@@ -117,14 +118,7 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
     /// </summary>
     public float maxCameraRotationX = 80;
 
-    /// <summary>
-    /// The original position of the map GameObject.
-    /// </summary>
     public Vector3 originalPosition;
-
-    /// <summary>
-    /// The original scale of the map GameObject.
-    /// </summary>
     public Vector3 originalScale;
 
     protected List<GameObject> markersGameObjects;
@@ -219,6 +213,7 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
             prefab = prefab,
             control = this,
             scale = marker3DScale,
+            allowDefaultMarkerEvents = allowDefaultMarkerEvents
         };
         marker.SetPosition(markerLng, markerLat);
         marker.Init(transform);
@@ -248,7 +243,7 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
 
         Vector2 inputPosition = GetInputPosition();
 
-        if (allowCameraControl && !IsCursorOnUIElement(inputPosition))
+        if (allowCameraControl)
         {
 #if (!UNITY_ANDROID && !UNITY_IPHONE) || UNITY_EDITOR
             if (Input.GetMouseButton(1))
@@ -334,10 +329,6 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
         markersRenderers = null;
     }
 
-    /// <summary>
-    /// Clears instances of 2D markers.
-    /// </summary>
-    /// <param name="mode"></param>
     public virtual void Clear2DMarkerInstances(OnlineMapsMarker2DMode mode)
     {
         if (mode == OnlineMapsMarker2DMode.billboard) Clear2DMarkerBillboards();
@@ -377,8 +368,6 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
     /// <returns>Marker instance or null.</returns>
     public OnlineMapsMarkerInstanceBase GetBillboardMarkerFromScreen(Vector2 screenPosition)
     {
-        if (IsCursorOnUIElement(screenPosition)) return null;
-
         RaycastHit hit;
         if (Physics.Raycast(activeCamera.ScreenPointToRay(screenPosition), out hit, OnlineMapsUtils.maxRaycastDistance))
         {
@@ -388,11 +377,11 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
     }
 
     /// <summary>
-    /// Returns the elevation value, based on the local position in the scene.
+    /// Returns the elevation value, based on the coordinates of the scene.
     /// </summary>
-    /// <param name="x">Local position X.</param>
-    /// <param name="z">Local position Z.</param>
-    /// <param name="yScale">Scale factor for elevation value.</param>
+    /// <param name="x">Scene X.</param>
+    /// <param name="z">Scene Z.</param>
+    /// <param name="yScale">Scale factor for evevation value.</param>
     /// <param name="topLeftPosition">Top-Left corner coordinates of map.</param>
     /// <param name="bottomRightPosition">Bottom-Right corner coordinates of map.</param>
     /// <returns>Elevation value.</returns>
@@ -402,11 +391,11 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
     }
 
     /// <summary>
-    /// Returns the elevation value, based on the local position in the scene.
+    /// Returns the elevation value, based on the coordinates of the scene.
     /// </summary>
-    /// <param name="x">Local position X.</param>
-    /// <param name="z">Local position Z.</param>
-    /// <param name="yScale">Scale factor for elevation value.</param>
+    /// <param name="x">Scene X.</param>
+    /// <param name="z">Scene Z.</param>
+    /// <param name="yScale">Scale factor for evevation value.</param>
     /// <param name="tlx">Top-left longitude of map.</param>
     /// <param name="tly">Top-left latitude of map.</param>
     /// <param name="brx">Bottom-right longitude of map.</param>
@@ -419,8 +408,6 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
 
     public override IOnlineMapsInteractiveElement GetInteractiveElement(Vector2 screenPosition)
     {
-        if (IsCursorOnUIElement(screenPosition)) return null;
-
         RaycastHit hit;
         if (Physics.Raycast(activeCamera.ScreenPointToRay(screenPosition), out hit, OnlineMapsUtils.maxRaycastDistance))
         {
@@ -435,6 +422,36 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
         return drawingElement;
     }
 
+    public override Vector2 GetScreenPosition(Vector2 coords)
+    {
+        Vector2 mapPos = GetPosition(coords);
+        mapPos.x /= map.width;
+        mapPos.y /= map.height;
+        Vector3 worldPos = new Vector3();
+
+        if (this is OnlineMapsTileSetControl)
+        {
+            double cpx = -map.tilesetSize.x * mapPos.x;
+            double cpy = map.tilesetSize.y * mapPos.y;
+
+            double tlx, tly, brx, bry;
+            map.GetCorners(out tlx, out tly, out brx, out bry);
+            float elevationScale = GetBestElevationYScale(tlx, tly, brx, bry);
+            float elevation = GetElevationValue(cpx, cpy, elevationScale, tlx, tly, brx, bry);
+            worldPos = transform.position + transform.rotation * new Vector3((float)(cpx * transform.lossyScale.x), elevation * transform.lossyScale.y, (float)(cpy * transform.lossyScale.z));
+        }
+        else
+        {
+            Bounds bounds = cl.bounds;
+            worldPos.x = bounds.max.x - bounds.size.x * mapPos.x;
+            worldPos.y = bounds.min.y;
+            worldPos.z = bounds.min.z + bounds.size.z * mapPos.y;
+        }
+
+        Camera cam = activeCamera ?? Camera.main;
+        return cam.WorldToScreenPoint(worldPos);
+    }
+
     public override Vector2 GetScreenPosition(double lng, double lat)
     {
         double px, py;
@@ -443,10 +460,24 @@ public abstract class OnlineMapsControlBase3D: OnlineMapsControlBase
         py /= map.height;
         Vector3 worldPos = new Vector3();
 
-        Bounds bounds = cl.bounds;
-        worldPos.x = (float)(bounds.max.x - bounds.size.x * px);
-        worldPos.y = bounds.min.y;
-        worldPos.z = (float)(bounds.min.z + bounds.size.z * py);
+        if (this is OnlineMapsTileSetControl)
+        {
+            double cpx = -map.tilesetSize.x * px;
+            double cpy = map.tilesetSize.y * py;
+
+            double tlx, tly, brx, bry;
+            map.GetCorners(out tlx, out tly, out brx, out bry);
+            float elevationScale = GetBestElevationYScale(tlx, tly, brx, bry);
+            float elevation = GetElevationValue(cpx, cpy, elevationScale, tlx, tly, brx, bry);
+            worldPos = transform.position + transform.rotation * new Vector3((float)(cpx * transform.lossyScale.x), elevation * transform.lossyScale.y, (float)(cpy * transform.lossyScale.z));
+        }
+        else
+        {
+            Bounds bounds = cl.bounds;
+            worldPos.x = (float)(bounds.max.x - bounds.size.x * px);
+            worldPos.y = bounds.min.y;
+            worldPos.z = (float)(bounds.min.z + bounds.size.z * py);
+        }
 
         Camera cam = activeCamera ?? Camera.main;
         return cam.WorldToScreenPoint(worldPos);

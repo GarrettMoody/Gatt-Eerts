@@ -1,7 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
-/*   http://www.infinity-code.com   */
-
-using System;
+﻿using System;
 using UnityEngine;
 
 public struct OnlineMapsVector2d

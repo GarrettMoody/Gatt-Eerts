@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -140,7 +140,7 @@ public class OnlineMapsOSMAPIQuery: OnlineMapsTextWebService
     /// <param name="nodes">Dictionary of nodes</param>
     /// <param name="ways">List of ways</param>
     /// <param name="relations">List of relations</param>
-    public static void ParseOSMResponseFast(string response, out Dictionary<string, OnlineMapsOSMNode> nodes, out Dictionary<string, OnlineMapsOSMWay> ways, out List<OnlineMapsOSMRelation> relations)
+    public static void ParseOSMResponseFast(string response, out Dictionary<string, OnlineMapsOSMNode> nodes, out List<OnlineMapsOSMWay> ways, out List<OnlineMapsOSMRelation> relations)
     {
         int i = 0;
         OSMXMLNode rootNode = new OSMXMLNode(response, ref i);
@@ -148,7 +148,7 @@ public class OnlineMapsOSMAPIQuery: OnlineMapsTextWebService
         if (rootNode.childs == null)
         {
             nodes = new Dictionary<string, OnlineMapsOSMNode>();
-            ways = new Dictionary<string, OnlineMapsOSMWay>();
+            ways = new List<OnlineMapsOSMWay>();
             relations = new List<OnlineMapsOSMRelation>();
             return;
         }
@@ -166,18 +166,14 @@ public class OnlineMapsOSMAPIQuery: OnlineMapsTextWebService
         }
 
         nodes = new Dictionary<string, OnlineMapsOSMNode>(countNodes);
-        ways = new Dictionary<string, OnlineMapsOSMWay>(countWays);
+        ways = new List<OnlineMapsOSMWay>(countWays);
         relations = new List<OnlineMapsOSMRelation>(countRelations);
 
         for (int j = 0; j < rootNode.childs.Count; j++)
         {
             OSMXMLNode node = rootNode.childs[j];
             if (node.name == "node") nodes.Add(node.GetAttribute("id"), new OnlineMapsOSMNode(node));
-            else if (node.name == "way")
-            {
-                OnlineMapsOSMWay way = new OnlineMapsOSMWay(node);
-                if (!ways.ContainsKey(way.id)) ways.Add(way.id, way);
-            }
+            else if (node.name == "way") ways.Add(new OnlineMapsOSMWay(node));
             else if (node.name == "relation") relations.Add(new OnlineMapsOSMRelation(node));
 
         }

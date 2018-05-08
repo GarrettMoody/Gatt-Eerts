@@ -1,10 +1,9 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -591,7 +590,51 @@ public class OnlineMapsXML : IEnumerable
     /// <returns>Value of element as the specified type.</returns>
     public T Get<T>(XmlElement el)
     {
-        return Get(el, default(T));
+        if (el == null) return default(T);
+
+#if !NETFX_CORE
+        string value = el.InnerXml;
+#else
+        string value = el.InnerText;
+#endif
+        if (string.IsNullOrEmpty(value)) return default(T);
+
+        Type type = typeof(T);
+        if (type == typeof(string)) return (T)Convert.ChangeType(value, type);
+        if (type == typeof(Color) || type == typeof(Color32)) return (T)Convert.ChangeType(OnlineMapsUtils.HexToColor(value), type);
+
+#if !NETFX_CORE
+        if (type == typeof(Vector2)) return (T)Convert.ChangeType(new Vector2(Get<float>(el["X"]), Get<float>(el["Y"])), type);
+        if (type == typeof(Vector3)) return (T)Convert.ChangeType(new Vector3(Get<float>(el["X"]), Get<float>(el["Y"]), Get<float>(el["Z"])), type);
+        if (type == typeof(OnlineMapsRange)) return (T)Convert.ChangeType(new OnlineMapsRange(Get<int>(el["Min"]), Get<int>(el["Max"])), type);
+#else
+        if (type == typeof(Vector2)) return (T)Convert.ChangeType(new Vector2(Get<float>(GetFirstChild(el, "X")), Get<float>(GetFirstChild(el, "Y"))), type);
+        if (type == typeof(Vector3)) return (T)Convert.ChangeType(new Vector3(Get<float>(GetFirstChild(el, "X")), Get<float>(GetFirstChild(el, "Y")), Get<float>(GetFirstChild(el, "Z"))), type);
+        if (type == typeof(OnlineMapsRange)) return (T)Convert.ChangeType(new OnlineMapsRange(Get<int>(GetFirstChild(el, "Min")), Get<int>(GetFirstChild(el, "Max"))), type);
+#endif
+
+        T obj = default(T);
+        PropertyInfo[] properties = OnlineMapsReflectionHelper.GetProperties(type);
+        Type underlyingType = type;
+
+#if !UNITY_WSA
+        if (properties.Length == 2 && string.Equals(properties[0].Name, "HasValue", StringComparison.InvariantCultureIgnoreCase)) underlyingType = properties[1].PropertyType;
+#else
+        if (properties.Length == 2 && string.Equals(properties[0].Name, "HasValue", StringComparison.OrdinalIgnoreCase)) underlyingType = properties[1].PropertyType;
+#endif
+
+        try
+        {
+            MethodInfo method = OnlineMapsReflectionHelper.GetMethod(underlyingType, "Parse", new[] {typeof (string)});
+            if (method != null) obj = (T)method.Invoke(null, new[] { value });
+        }
+        catch (Exception exception)
+        {
+            Debug.Log(exception.Message + "\n" + exception.StackTrace);
+            throw;
+        }
+
+        return obj;
     }
 
     /// <summary>
@@ -659,7 +702,12 @@ public class OnlineMapsXML : IEnumerable
     /// <returns>Value of element as the specified type.</returns>
     public T Get<T>(string childName)
     {
-        return Get(childName, default(T));
+        if (!hasChildNodes) return default(T);
+#if !NETFX_CORE
+        return Get<T>(_element[childName]);
+#else
+        return Get<T>(GetFirstChild(_element, childName));
+#endif
     }
 
     /// <summary>
@@ -711,12 +759,6 @@ public class OnlineMapsXML : IEnumerable
 #endif
         return nsmgr;
     }
-
-    /// <summary>
-    /// Checks whether the contain child element with the specified name.
-    /// </summary>
-    /// <param name="childName">Name of child element</param>
-    /// <returns>True - this contains the child with the specified name, false - otherwise.</returns>
     public bool HasChild(string childName)
     {
         if (!hasChildNodes) return false;

@@ -1,7 +1,6 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -26,14 +25,19 @@ namespace InfinityCode.OnlineMapsExamples
         private double rsY;
         private double lng;
         private double lat;
+        private bool isZoom;
         private const int maxSamples = 5;
-
-        private bool isSmoothZoomProceed;
-        private bool waitZeroTouches;
 
         private void FixedUpdate()
         {
-            if (isSmoothZoomProceed || waitZeroTouches) return;
+            if (isZoom) return;
+
+            if (OnlineMapsControlBase.instance.GetTouchCount() > 1)
+            {
+                isZoom = true;
+                speedX.Clear();
+                speedY.Clear();
+            }
 
             // If there is interaction with the map.
             if (isInteract)
@@ -86,42 +90,25 @@ namespace InfinityCode.OnlineMapsExamples
         /// </summary>
         private void OnMapRelease()
         {
+            if (OnlineMapsControlBase.instance.GetTouchCount() > 0) return;
+
             // Is marked, that ended the interaction with the map.
             isInteract = false;
 
-            // Calculates the average speed.
-            rsX = speedX.Count > 0 ? speedX.Average() : 0;
-            rsY = speedY.Count > 0 ? speedY.Average() : 0;
-
-            if (waitZeroTouches && OnlineMapsControlBase.instance.GetTouchCount() == 0)
+            if (isZoom)
             {
-                waitZeroTouches = false;
+                isZoom = false;
                 rsX = rsY = 0;
+            }
+            else
+            {
+                // Calculates the average speed.
+                rsX = speedX.Count > 0 ? speedX.Average() : 0;
+                rsY = speedY.Count > 0 ? speedY.Average() : 0;
             }
 
             speedX.Clear();
             speedY.Clear();
-        }
-
-        private void OnSmoothZoomFinish()
-        {
-            speedX.Clear();
-            speedY.Clear();
-            rsX = 0;
-            rsY = 0;
-
-            isSmoothZoomProceed = false;
-
-            if (OnlineMapsControlBase.instance.GetTouchCount() != 0) waitZeroTouches = true;
-        }
-
-        private void OnSmoothZoomBegin()
-        {
-            speedX.Clear();
-            speedY.Clear();
-            rsX = 0;
-            rsY = 0;
-            isSmoothZoomProceed = true;
         }
 
         private void Start()
@@ -129,13 +116,6 @@ namespace InfinityCode.OnlineMapsExamples
             // Subscribe to map events
             OnlineMapsControlBase.instance.OnMapPress += OnMapPress;
             OnlineMapsControlBase.instance.OnMapRelease += OnMapRelease;
-
-            // Prevents inertia with smooth zoom.
-            if (OnlineMapsTileSetControl.instance != null)
-            {
-                OnlineMapsTileSetControl.instance.OnSmoothZoomBegin += OnSmoothZoomBegin;
-                OnlineMapsTileSetControl.instance.OnSmoothZoomFinish += OnSmoothZoomFinish;
-            }
 
             // Initialize arrays of speed
             speedX = new List<double>();

@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -30,27 +30,6 @@ public abstract class OnlineMapsJSONItem: IEnumerable<OnlineMapsJSONItem>
     /// <param name="key">Element key</param>
     /// <returns>Element</returns>
     public abstract OnlineMapsJSONItem this[string key] { get; }
-
-    /// <summary>
-    /// Serializes the object and adds to the current json node.
-    /// </summary>
-    /// <param name="obj">Object</param>
-    /// <returns>Current json node</returns>
-    public virtual OnlineMapsJSONItem AppendObject(object obj)
-    {
-        throw new Exception("AppendObject is only allowed for OnlineMapsJSONObject.");
-    }
-
-    /// <summary>
-    /// Returns the value of the child element, converted to the specified type.
-    /// </summary>
-    /// <typeparam name="T">Type of variable</typeparam>
-    /// <param name="childName">Child element key</param>
-    /// <returns>Value</returns>
-    public T ChildValue<T>(string childName)
-    {
-        return this[childName].Value<T>();
-    }
 
     /// <summary>
     /// Deserializes current element
@@ -114,26 +93,5 @@ public abstract class OnlineMapsJSONItem: IEnumerable<OnlineMapsJSONItem>
     public virtual T Value<T>()
     {
         return default(T);
-    }
-
-    /// <summary>
-    /// Returns the value of the element, converted to the specified type.
-    /// </summary>
-    /// <typeparam name="T">Type of variable</typeparam>
-    /// <returns>Value</returns>
-    public T V<T>()
-    {
-        return Value<T>();
-    }
-
-    /// <summary>
-    /// Returns the value of the child element, converted to the specified type.
-    /// </summary>
-    /// <typeparam name="T">Type of variable</typeparam>
-    /// <param name="childName">Child element key</param>
-    /// <returns>Value</returns>
-    public T V<T>(string childName)
-    {
-        return ChildValue<T>(childName);
     }
 }

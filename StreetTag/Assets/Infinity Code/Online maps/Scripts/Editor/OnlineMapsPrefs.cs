@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System.Collections.Generic;
@@ -13,11 +13,7 @@ public static class OnlineMapsPrefs
 
     static OnlineMapsPrefs()
     {
-#if !UNITY_2017_2_OR_NEWER
         EditorApplication.playmodeStateChanged += PlaymodeStateChanged;
-#else
-        EditorApplication.playModeStateChanged += PlaymodeStateChanged;
-#endif
     }
 
     private static bool Exists()
@@ -207,11 +203,7 @@ public static class OnlineMapsPrefs
         api.useSoftwareJPEGDecoder = el.Get<bool>("UseSoftwareJPEGDecoder");
     }
 
-#if !UNITY_2017_2_OR_NEWER
     private static void PlaymodeStateChanged()
-#else
-    private static void PlaymodeStateChanged(PlayModeStateChange playModeStateChange)
-#endif
     {
         if (!EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode)
         {

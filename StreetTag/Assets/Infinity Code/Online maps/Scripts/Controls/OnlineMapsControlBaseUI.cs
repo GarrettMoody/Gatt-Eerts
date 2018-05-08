@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System.Collections.Generic;
@@ -49,6 +49,47 @@ public abstract class OnlineMapsControlBaseUI<T> : OnlineMapsControlBase2D where
         }
         lastTouchCount = Input.touchCount;
 #endif
+    }
+
+    public override Vector2 GetCoords(Vector2 position)
+    {
+        Vector2 point;
+
+#if CURVEDUI
+        if (curvedUI != null)
+        {
+            Camera activeCamera = image.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? Camera.main : image.canvas.worldCamera;
+            if (!curvedUI.RaycastToCanvasSpace(activeCamera.ScreenPointToRay(position), out point)) return Vector2.zero;
+            Vector3 worldPoint = image.canvas.transform.localToWorldMatrix.MultiplyPoint(point);
+            point = image.rectTransform.worldToLocalMatrix.MultiplyPoint(worldPoint);
+        }
+        else
+        {
+#endif
+        if (!RectTransformUtility.RectangleContainsScreenPoint(image.rectTransform, position, worldCamera)) return Vector2.zero;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(image.rectTransform, position, worldCamera, out point);
+#if CURVEDUI
+        }
+#endif
+        Rect rect = image.GetPixelAdjustedRect();
+
+        Vector2 size = rect.max - point;
+        size.x = size.x / rect.size.x;
+        size.y = size.y / rect.size.y;
+
+        Vector2 r = new Vector2(size.x - .5f, size.y - .5f);
+
+        int countX = map.width / OnlineMapsUtils.tileSize;
+        int countY = map.height / OnlineMapsUtils.tileSize;
+
+        double px, py;
+        map.GetTilePosition(out px, out py);
+
+        px -= countX * r.x;
+        py += countY * r.y;
+
+        map.projection.TileToCoordinates(px, py, map.zoom, out px, out py);
+        return new Vector2((float)px, (float)py);
     }
 
     public override bool GetCoords(out double lng, out double lat, Vector2 position)
@@ -112,6 +153,11 @@ public abstract class OnlineMapsControlBaseUI<T> : OnlineMapsControlBase2D where
         }
         Rect result = new Rect(xMin, yMin, xMax - xMin, yMax - yMin);
         return result;
+    }
+
+    protected override bool HitTest()
+    {
+        return HitTest(GetInputPosition());
     }
 
     protected override bool HitTest(Vector2 position)

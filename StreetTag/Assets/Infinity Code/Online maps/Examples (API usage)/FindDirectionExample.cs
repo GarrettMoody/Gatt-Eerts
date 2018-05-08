@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System.Collections.Generic;
@@ -24,31 +24,27 @@ namespace InfinityCode.OnlineMapsExamples
 
         private void OnFindDirectionComplete(string response)
         {
-            // Get the resut object.
-            OnlineMapsGoogleDirectionsResult result = OnlineMapsGoogleDirections.GetResult(response);
+            // Get the route steps.
+            List<OnlineMapsDirectionStep> steps = OnlineMapsDirectionStep.TryParse(response);
 
-            // Check that the result is not null, and the number of routes is not zero.
-            if (result == null || result.routes.Length == 0) 
+            if (steps != null)
+            {
+                // Showing the console instructions for each step.
+                foreach (OnlineMapsDirectionStep step in steps) Debug.Log(step.stringInstructions);
+
+                // Get all the points of the route.
+                List<Vector2> points = OnlineMapsDirectionStep.GetPoints(steps);
+
+                // Create a line, on the basis of points of the route.
+                OnlineMapsDrawingLine route = new OnlineMapsDrawingLine(points, Color.green);
+
+                // Draw the line route on the map.
+                OnlineMaps.instance.AddDrawingElement(route);
+            }
+            else
             {
                 Debug.Log("Find direction failed");
-                Debug.Log(response);
-                return;
             }
-
-            // Showing the console instructions for each step.
-            foreach (OnlineMapsGoogleDirectionsResult.Leg leg in result.routes[0].legs)
-            {
-                foreach (OnlineMapsGoogleDirectionsResult.Step step in leg.steps)
-                {
-                    Debug.Log(step.string_instructions);
-                }
-            }
-
-            // Create a line, on the basis of points of the route.
-            OnlineMapsDrawingLine route = new OnlineMapsDrawingLine(result.routes[0].overview_polylineD, Color.green);
-
-            // Draw the line route on the map.
-            OnlineMaps.instance.AddDrawingElement(route);
         }
     }
 }

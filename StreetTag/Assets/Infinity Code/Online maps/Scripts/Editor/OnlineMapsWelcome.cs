@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -52,11 +52,7 @@ public class OnlineMapsWelcome:EditorWindow
         Rect rect = GUILayoutUtility.GetLastRect();
         EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
 
-#if UNITY_2017_3_OR_NEWER
         bool returnValue = Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition);
-#else
-        bool returnValue = Event.current.type == EventType.mouseDown && rect.Contains(Event.current.mousePosition);
-#endif
 
         GUILayout.Space(space);
 

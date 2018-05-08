@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 #if !UNITY_4_6 && !UNITY_4_7 && !UNITY_5_0 && !UNITY_5_1 && !UNITY_5_2
@@ -33,6 +33,7 @@ public class OnlineMapsTextureControlEditor : Editor
     protected SerializedProperty pMarker2DMode;
     protected SerializedProperty pMarker2DSize;
     protected SerializedProperty pMarker3DScale;
+    protected SerializedProperty pAllowDefaultMarkerEvents;
     protected SerializedProperty pMarkers3D;
     protected SerializedProperty pActiveCamera;
     protected SerializedProperty pZoomMode;
@@ -54,6 +55,7 @@ public class OnlineMapsTextureControlEditor : Editor
         pMarker2DMode = serializedObject.FindProperty("marker2DMode");
         pMarker2DSize = serializedObject.FindProperty("marker2DSize");
         pMarker3DScale = serializedObject.FindProperty("marker3DScale");
+        pAllowDefaultMarkerEvents = serializedObject.FindProperty("allowDefaultMarkerEvents");
         pMarkers3D = serializedObject.FindProperty("markers3D");
         pActiveCamera = serializedObject.FindProperty("activeCamera");
         pZoomMode = serializedObject.FindProperty("zoomMode");
@@ -106,6 +108,7 @@ public class OnlineMapsTextureControlEditor : Editor
         {
             EditorGUILayout.PropertyField(pDefault3DMarker);
             EditorGUILayout.PropertyField(pMarker3DScale);
+            EditorGUILayout.PropertyField(pAllowDefaultMarkerEvents);
 
             int removedIndex = -1;
 

@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -467,18 +467,12 @@ public class OnlineMapsBingMapsElevation:OnlineMapsTextWebService
         }
     }
 
-    /// <summary>
-    /// Sea level model to use to calculate elevation
-    /// </summary>
     public enum Heights
     {
         sealevel,
         ellipsoid
     }
 
-    /// <summary>
-    /// Output format
-    /// </summary>
     public enum Output
     {
         xml,

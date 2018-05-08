@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -26,18 +26,6 @@ public class OnlineMapsLocationService : OnlineMapsLocationServiceGenericBase<On
 
     private List<LastPositionItem> lastPositions;
     private double lastLocationInfoTimestamp;
-
-    protected override void GetLocationFromSensor(out float longitude, out float latitude)
-    {
-        LocationInfo data = Input.location.lastData;
-        longitude = data.longitude;
-        latitude = data.latitude;
-    }
-
-    public override bool IsLocationServiceRunning()
-    {
-        return Input.location.status == LocationServiceStatus.Running;
-    }
 
     public OnlineMapsXML Save(OnlineMapsXML parent)
     {
@@ -74,6 +62,38 @@ public class OnlineMapsLocationService : OnlineMapsLocationServiceGenericBase<On
         return element;
     }
 
+    public override void UpdateSpeed()
+    {
+        LocationInfo lastData = Input.location.lastData;
+        if (Math.Abs(lastLocationInfoTimestamp - lastData.timestamp) < double.Epsilon) return;
+
+        float longitude = lastData.longitude; 
+        float latitude = lastData.latitude;
+        if (OnGetLocation != null) OnGetLocation(out longitude, out latitude);
+
+        lastLocationInfoTimestamp = lastData.timestamp;
+
+        if (lastPositions == null) lastPositions = new List<LastPositionItem>();
+
+        lastPositions.Add(new LastPositionItem(longitude, latitude, lastData.timestamp));
+        while (lastPositions.Count > maxPositionCount) lastPositions.RemoveAt(0);
+
+        if (lastPositions.Count < 2)
+        {
+            _speed = 0;
+            return;
+        }
+
+        LastPositionItem p1 = lastPositions[0];
+        LastPositionItem p2 = lastPositions[lastPositions.Count - 1];
+
+        double dx, dy;
+        OnlineMapsUtils.DistanceBetweenPoints(p1.lng, p1.lat, p2.lng, p2.lat, out dx, out dy);
+        double distance = Math.Sqrt(dx * dx + dy * dy);
+        double time = (p2.timestamp - p1.timestamp) / 3600;
+        _speed = Mathf.Abs((float) (distance / time));
+    }
+
     /// <summary>
     /// Starts location service updates. Last location coordinates could be.
     /// </summary>
@@ -106,41 +126,21 @@ public class OnlineMapsLocationService : OnlineMapsLocationServiceGenericBase<On
         }
     }
 
+    public override bool IsLocationServiceRunning()
+    {
+        return Input.location.status == LocationServiceStatus.Running;
+    }
+
+    public override void GetLocation(out float longitude, out float latitude)
+    {
+        LocationInfo data = Input.location.lastData;
+        longitude = data.longitude;
+        latitude = data.latitude;
+    }
+
     public override void StopLocationService()
     {
         Input.location.Stop();
-    }
-
-    public override void UpdateSpeed()
-    {
-        LocationInfo lastData = Input.location.lastData;
-        if (Math.Abs(lastLocationInfoTimestamp - lastData.timestamp) < double.Epsilon) return;
-
-        float longitude = lastData.longitude; 
-        float latitude = lastData.latitude;
-        if (OnGetLocation != null) OnGetLocation(out longitude, out latitude);
-
-        lastLocationInfoTimestamp = lastData.timestamp;
-
-        if (lastPositions == null) lastPositions = new List<LastPositionItem>();
-
-        lastPositions.Add(new LastPositionItem(longitude, latitude, lastData.timestamp));
-        while (lastPositions.Count > maxPositionCount) lastPositions.RemoveAt(0);
-
-        if (lastPositions.Count < 2)
-        {
-            _speed = 0;
-            return;
-        }
-
-        LastPositionItem p1 = lastPositions[0];
-        LastPositionItem p2 = lastPositions[lastPositions.Count - 1];
-
-        double dx, dy;
-        OnlineMapsUtils.DistanceBetweenPoints(p1.lng, p1.lat, p2.lng, p2.lat, out dx, out dy);
-        double distance = Math.Sqrt(dx * dx + dy * dy);
-        double time = (p2.timestamp - p1.timestamp) / 3600;
-        _speed = Mathf.Abs((float) (distance / time));
     }
 
     internal struct LastPositionItem

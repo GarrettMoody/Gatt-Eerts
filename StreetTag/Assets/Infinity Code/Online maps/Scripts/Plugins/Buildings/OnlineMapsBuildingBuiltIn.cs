@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2018      */
+/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -47,7 +47,7 @@ public class OnlineMapsBuildingBuiltIn : OnlineMapsBuildingBase
         }
     }
 
-    private static void AnalizeHouseTags(OnlineMapsBuildings container, OnlineMapsOSMWay way, ref Material wallMaterial, ref Material roofMaterial, ref float baseHeight)
+    private static void AnalizeHouseTags(OnlineMapsOSMWay way, ref Material wallMaterial, ref Material roofMaterial, ref float baseHeight)
     {
         string heightStr = way.GetTagValue("height");
         bool hasHeight = false;
@@ -76,11 +76,8 @@ public class OnlineMapsBuildingBuiltIn : OnlineMapsBuildingBase
 
         if (baseHeight < OnlineMapsBuildings.instance.minHeight) baseHeight = OnlineMapsBuildings.instance.minHeight;
 
-        if (container.useColorTag)
-        {
-            string colorStr = way.GetTagValue("building:colour");
-            if (!String.IsNullOrEmpty(colorStr)) wallMaterial.color = roofMaterial.color = StringToColor(colorStr);
-        }
+        string colorStr = way.GetTagValue("building:colour");
+        if (!String.IsNullOrEmpty(colorStr)) wallMaterial.color = roofMaterial.color = StringToColor(colorStr);
     }
 
     /// <summary>
@@ -184,7 +181,7 @@ public class OnlineMapsBuildingBuiltIn : OnlineMapsBuildingBase
         }
 
         RoofType roofType = RoofType.flat;
-        AnalizeHouseTags(container, way, ref building.wallMaterial, ref building.roofMaterial, ref baseHeight);
+        AnalizeHouseTags(way, ref building.wallMaterial, ref building.roofMaterial, ref baseHeight);
         AnalizeHouseRoofType(way, ref baseHeight, ref roofType, ref roofHeight);
 
         building.mesh = new Mesh {name = way.id};
@@ -253,11 +250,8 @@ public class OnlineMapsBuildingBuiltIn : OnlineMapsBuildingBase
         building.mesh.RecalculateBounds();
         building.mesh.RecalculateNormals();
 
-        if (container.generateColliders)
-        {
-            building.buildingCollider = houseGO.AddComponent<MeshCollider>();
-            (building.buildingCollider as MeshCollider).sharedMesh = building.mesh;
-        }
+        building.buildingCollider = houseGO.AddComponent<MeshCollider>();
+        (building.buildingCollider as MeshCollider).sharedMesh = building.mesh;
 
         return building;
     }
@@ -550,11 +544,6 @@ public class OnlineMapsBuildingBuiltIn : OnlineMapsBuildingBase
         return container.materials[Random.Range(0, container.materials.Length)];
     }
 
-    /// <summary>
-    /// Converts a string that contains the color name or HEX code to Color.
-    /// </summary>
-    /// <param name="str">String that contains the color name or HEX code</param>
-    /// <returns>Color</returns>
     public static Color StringToColor(string str)
     {
         str = str.ToLower();

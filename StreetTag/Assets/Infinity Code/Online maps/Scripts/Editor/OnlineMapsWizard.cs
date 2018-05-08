@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -67,19 +67,8 @@ public class OnlineMapsWizard : EditorWindow
     {
         if (tsCamera == null) return -1;
 
-        Vector3 cameraPosition;
-        if (moveCameraToTileset)
-        {
-            cameraPosition = new Vector3(tilesetSize.x / -2, Mathf.Min(tilesetSize.x, tilesetSize.y), tilesetSize.y / 2);
-        }
-        else
-        {
-            cameraPosition = tsCamera.transform.position;
-        }
-
         Vector3 mapCenter = new Vector3(tilesetSize.x / -2, 0, tilesetSize.y / 2);
-        float distance = (cameraPosition - mapCenter).magnitude * 1.5f;
-
+        float distance = (tsCamera.transform.position - mapCenter).magnitude * 1.5f;
         if (distance <= tsCamera.farClipPlane) return -1;
 
         return distance;
@@ -100,26 +89,12 @@ public class OnlineMapsWizard : EditorWindow
 
     private void CheckThirdPartyDirectives(ref bool allowCreate)
     {
-        if (mapControl2D == 0)
-        {
-#if UNITY_2017_2_OR_NEWER && !ONLINEMAPS_GUITEXTURE
-            EditorGUILayout.HelpBox("GUITexture is part of the legacy GUI, and will be removed in future versions of Unity Editor.", MessageType.Warning);
-            allowCreate = false;
-            if (GUILayout.Button("Enable GUITexture"))
-            {
-                string currentDefinitions = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
-                if (currentDefinitions != "") currentDefinitions += ";";
-                currentDefinitions += "ONLINEMAPS_GUITEXTURE";
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, currentDefinitions);
-            }
-#endif
-        }
-        else if (mapControl2D == 4)
+        if (mapControl2D == 4)
         {
 #if !NGUI
             EditorGUILayout.HelpBox("Make sure that you have NGUI in your project and click «Enable NGUI».", MessageType.Warning);
             allowCreate = false;
-            if (GUILayout.Button("Enable NGUI"))
+            if (GUILayout.Button("Enable NGUI", GUILayout.ExpandWidth(false)))
             {
                 string currentDefinitions = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
                 if (currentDefinitions != "") currentDefinitions += ";";
@@ -133,7 +108,7 @@ public class OnlineMapsWizard : EditorWindow
 #if !DFGUI
             EditorGUILayout.HelpBox("Make sure that you have DF-GUI in your project and click «Enable DF-GUI».", MessageType.Warning);
             allowCreate = false;
-            if (GUILayout.Button("Enable DF-GUI"))
+            if (GUILayout.Button("Enable DF-GUI", GUILayout.ExpandWidth(false)))
             {
                 string currentDefinitions = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
                 if (currentDefinitions != "") currentDefinitions += ";";
@@ -147,7 +122,7 @@ public class OnlineMapsWizard : EditorWindow
 #if !IGUI
             EditorGUILayout.HelpBox("Make sure that you have iGUI in your project and click «Enable iGUI».", MessageType.Warning);
             allowCreate = false;
-            if (GUILayout.Button("Enable iGUI"))
+            if (GUILayout.Button("Enable iGUI", GUILayout.ExpandWidth(false)))
             {
                 string currentDefinitions = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
                 if (currentDefinitions != "") currentDefinitions += ";";
@@ -164,25 +139,22 @@ public class OnlineMapsWizard : EditorWindow
         GameObject go = map.gameObject;
         if (use3DControl == 0)
         {
-            string texturePath;
-            Texture2D texture = CreateTexture(map, out texturePath);
+            Texture2D texture = CreateTexture(map);
 
             if (mapControl2D == 0)
             {
-#if !UNITY_2017_2_OR_NEWER || ONLINEMAPS_GUITEXTURE
                 go.AddComponent<OnlineMapsGUITextureControl>();
                 GUITexture guiTexture = go.GetComponent<GUITexture>();
                 guiTexture.texture = texture;
                 go.transform.localPosition = new Vector3(0.5f, 0.5f);
                 go.transform.localScale = Vector3.zero;
                 guiTexture.pixelInset = new Rect(textureWidth / -2, textureHeight / -2, textureWidth, textureHeight);
-#endif
             }
             else if (mapControl2D == 1)
             {
                 go.AddComponent<OnlineMapsSpriteRendererControl>();
                 SpriteRenderer spriteRenderer = go.GetComponent<SpriteRenderer>();
-                spriteRenderer.sprite = AssetDatabase.LoadAssetAtPath(texturePath, typeof(Sprite)) as Sprite;
+                spriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, textureWidth, textureHeight), Vector2.zero);
                 go.AddComponent<BoxCollider>();
             }
             else if (mapControl2D == 2 || mapControl2D == 3)
@@ -199,7 +171,7 @@ public class OnlineMapsWizard : EditorWindow
                 {
                     go.AddComponent<OnlineMapsUIImageControl>();
                     Image image = go.AddComponent<Image>();
-                    image.sprite = AssetDatabase.LoadAssetAtPath(texturePath, typeof(Sprite)) as Sprite;
+                    image.sprite = Sprite.Create(texture, new Rect(0, 0, textureWidth, textureHeight), Vector2.zero);
                 }
                 else
                 {
@@ -295,8 +267,7 @@ public class OnlineMapsWizard : EditorWindow
             }
             else if (mapControl3D == 1)
             {
-                string texturePath;
-                Texture2D texture = CreateTexture(map, out texturePath);
+                Texture2D texture = CreateTexture(map);
                 control3D = go.AddComponent<OnlineMapsTextureControl>();
                 Renderer renderer = go.GetComponent<Renderer>();
                 renderer.sharedMaterial = new Material(Shader.Find("Diffuse"));
@@ -340,9 +311,9 @@ public class OnlineMapsWizard : EditorWindow
         return map;
     }
 
-    private Texture2D CreateTexture(OnlineMaps map, out string texturePath)
+    private Texture2D CreateTexture(OnlineMaps map)
     {
-        texturePath = string.Format("Assets/{0}.png", textureFilename);
+        string texturePath = string.Format("Assets/{0}.png", textureFilename);
         map.texture = new Texture2D(textureWidth, textureHeight);
         File.WriteAllBytes(texturePath, map.texture.EncodeToPNG());
         AssetDatabase.Refresh();
@@ -529,7 +500,7 @@ public class OnlineMapsWizard : EditorWindow
 
         if (source != OnlineMapsSource.Resources)
         {
-            webplayerProxyURL = EditorGUILayout.TextField("Proxy (for WebGL): ", webplayerProxyURL);
+            webplayerProxyURL = EditorGUILayout.TextField("Proxy (for Webplayer): ", webplayerProxyURL);
 
             DrawProvider();
 
@@ -667,11 +638,6 @@ public class OnlineMapsWizard : EditorWindow
 
     private void OnEnable()
     {
-        activeMapType = OnlineMapsProvider.FindMapType("arcgis");
-        providers = OnlineMapsProvider.GetProviders();
-        providersTitle = OnlineMapsProvider.GetProvidersTitle();
-        providerIndex = activeMapType.provider.index;
-
         InitSteps();
         defaultTilesetShader = Shader.Find("Infinity Code/Online Maps/Tileset");
         tilesetShader = defaultTilesetShader;
@@ -719,6 +685,10 @@ public class OnlineMapsWizard : EditorWindow
     public static void OpenWindow()
     {
         GetWindow<OnlineMapsWizard>(true, "Create Map", true);
+        activeMapType = OnlineMapsProvider.FindMapType("arcgis");
+        providers = OnlineMapsProvider.GetProviders();
+        providersTitle = OnlineMapsProvider.GetProvidersTitle();
+        providerIndex = activeMapType.provider.index;
     }
 
     private delegate void OnlineMapsWizardDelegate(ref bool allowCreate);

@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2018      */
+﻿/*     INFINITY CODE 2013-2017      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -42,9 +42,6 @@ public class OnlineMapsDirectionStep
     /// </summary>
     public List<Vector2> points;
 
-    /// <summary>
-    /// A list of locations of points included in the current step.
-    /// </summary>
     public List<OnlineMapsVector2d> pointsD;
 
     /// <summary>
@@ -101,10 +98,6 @@ public class OnlineMapsDirectionStep
         return routePoints;
     }
 
-    /// <summary>
-    /// Converts a list of the steps of the route to list of point locations.
-    /// </summary>
-    /// <param name="steps">List of the steps of the route.</param>
     public static List<OnlineMapsVector2d> GetPointsD(List<OnlineMapsDirectionStep> steps)
     {
         List<OnlineMapsVector2d> routePoints = new List<OnlineMapsVector2d>();
