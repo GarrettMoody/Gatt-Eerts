@@ -1,5 +1,9 @@
-/*     INFINITY CODE 2013-2017      */
+/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
+
+/*NAME          DATE        CHANGE                                          */
+/*--------------------------------------------------------------------------*/
+/*MIKE NACKERS  2018-05-04  TOP LABEL AND BUTTON NAME                       */
 
 using UnityEngine;
 
@@ -21,24 +25,29 @@ namespace InfinityCode.OnlineMapsDemos
                 rowStyle.margin = new RectOffset(margin.left, margin.right, 1, 1);
             }
 
-            GUILayout.BeginArea(new Rect(5, 40, 30, 255), GUI.skin.box);
+            /*GUILayout.BeginArea(new Rect(5, 40, 30, 255), GUI.skin.box);*/
+            GUILayout.BeginArea(new Rect(5, 40, 100, 435), GUI.skin.box);//MJN 2018-05-04
 
             if (GUILayout.Button("-")) map.zoom--;
 
-            for (int i = 3; i < 21; i++)
-                if (GUILayout.Button("", rowStyle, GUILayout.Height(10))) map.zoom = i;
+            for (int i = 3; i < 21; i++)                
+                /*if (GUILayout.Button("", rowStyle, GUILayout.Height(10))) map.zoom = i;*/
+                if (GUILayout.Button("ZOOM"+i, rowStyle, GUILayout.Height(20))) map.zoom = i;//MJN 2018-05-04
 
             if (GUILayout.Button("+")) map.zoom++;
 
             GUILayout.EndArea();
 
             GUI.Box(new Rect(5, 5, Screen.width - 10, 30), "");
-            GUI.Label(new Rect(10, 10, 100, 20), "Find place:");
-            search = GUI.TextField(new Rect(80, 10, Screen.width - 200, 20), search);
+            /*GUI.Label(new Rect(10, 10, 100, 20), "Find place:");*/
+            GUI.Label(new Rect(10, 10, 200, 20), "GEOPH Shut Up Find a place:");//MJN 2018-05-04
+            /*search = GUI.TextField(new Rect(80, 10, Screen.width - 200, 20), search);*/
+            search = GUI.TextField(new Rect(215, 10, Screen.width - 200 - 135, 20), search);//MJN 2018-05-04
             if (Event.current.type == EventType.KeyUp &&
                 (Event.current.keyCode == KeyCode.KeypadEnter || Event.current.keyCode == KeyCode.Return))
                 FindLocation();
-            if (GUI.Button(new Rect(Screen.width - 110, 10, 100, 20), "Search")) FindLocation();
+            /*if (GUI.Button(new Rect(Screen.width - 110, 10, 100, 20), "Search")) FindLocation();*/
+            if (GUI.Button(new Rect(Screen.width - 110, 10, 100, 20), "BISOYA")) FindLocation();//MJN 2018-05-04
         }
 
         private void FindLocation()

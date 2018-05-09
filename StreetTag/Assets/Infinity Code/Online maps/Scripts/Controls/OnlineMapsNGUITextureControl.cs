@@ -1,4 +1,4 @@
-/*     INFINITY CODE 2013-2017      */
+/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System.Collections;
@@ -33,15 +33,10 @@ public class OnlineMapsNGUITextureControl : OnlineMapsControlBase2D
         get { return uiTexture.uvRect; }
     }
 
-    public override Vector2 GetCoords(Vector2 position)
-    {
-        double lng, lat;
-        GetCoords(out lng, out lat, position);
-        return new Vector2((float)lng, (float)lat);
-    }
-
     public override bool GetCoords(out double lng, out double lat, Vector2 position)
     {
+        lng = lat = 0;
+        if (UICamera.currentCamera == null) return false;
         Vector3 worldPos = UICamera.currentCamera.ScreenToWorldPoint(position);
         Vector3 localPos = transform.worldToLocalMatrix.MultiplyPoint3x4(worldPos);
 
@@ -77,19 +72,20 @@ public class OnlineMapsNGUITextureControl : OnlineMapsControlBase2D
         return new Rect(rx, ry, rz, rw);
     }
 
-    public override Vector2 GetScreenPosition(Vector2 coords)
+    public override Vector2 GetScreenPosition(double lng, double lat)
     {
         if (UICamera.currentCamera == null) return Vector2.zero;
 
-        Vector2 mapPos = GetPosition(coords);
-        mapPos.x = (mapPos.x / map.width - 0.5f) * uiWidget.localSize.x;
-        mapPos.y = (0.5f - mapPos.y / map.height) * uiWidget.localSize.y;
-        Vector3 worldPos = transform.TransformPoint(mapPos);
+        double px, py;
+        GetPosition(lng, lat, out px, out py);
+        px = (px / map.width - 0.5f) * uiWidget.localSize.x;
+        py = (0.5f - py / map.height) * uiWidget.localSize.y;
+        Vector3 worldPos = transform.TransformPoint(new Vector3((float)px, (float)py, 0));
         Vector3 screenPosition = UICamera.currentCamera.WorldToScreenPoint(worldPos);
         return screenPosition;
     }
 
-    protected override bool HitTest()
+    protected override bool HitTest(Vector2 position)
     {
 #if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
         return UICamera.currentTouch != null && UICamera.currentTouch.current == gameObject;
@@ -97,12 +93,6 @@ public class OnlineMapsNGUITextureControl : OnlineMapsControlBase2D
         return UICamera.hoveredObject == gameObject;
 #endif
     }
-
-    protected override bool HitTest(Vector2 position)
-    {
-        return HitTest();
-    }
-
 
     protected override void OnEnableLate()
     {
@@ -131,6 +121,12 @@ public class OnlineMapsNGUITextureControl : OnlineMapsControlBase2D
     {
         yield return new WaitForEndOfFrame();
         uiTexture.mainTexture = texture;
+    }
+#else
+    public override bool GetCoords(out double lng, out double lat, Vector2 position)
+    {
+        lng = lat = 0;
+        return false;
     }
 #endif
 }

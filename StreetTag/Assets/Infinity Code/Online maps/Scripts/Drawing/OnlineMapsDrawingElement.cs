@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -32,6 +32,9 @@ public class OnlineMapsDrawingElement: IOnlineMapsInteractiveElement
     /// </summary>
     public Action<OnlineMapsDrawingElement> OnDrawTooltip;
 
+    /// <summary>
+    /// Events that occur when user long press on the drawing element.
+    /// </summary>
     public Action<OnlineMapsDrawingElement> OnLongPress;
 
     /// <summary>
@@ -100,6 +103,9 @@ public class OnlineMapsDrawingElement: IOnlineMapsInteractiveElement
         get { return Vector2.zero; }
     }
 
+    /// <summary>
+    /// Offset from Shader.renderQueue.
+    /// </summary>
     public int renderQueueOffset
     {
         get { return _renderQueueOffset; }
@@ -1130,7 +1136,7 @@ public class OnlineMapsDrawingElement: IOnlineMapsInteractiveElement
     /// </summary>
     public static void MarkChanged()
     {
-        lock (OnlineMapsTile.tiles)
+        lock (OnlineMapsTile.lockTiles)
         {
             foreach (OnlineMapsTile tile in OnlineMapsTile.tiles) tile.drawingChanged = true;
         }

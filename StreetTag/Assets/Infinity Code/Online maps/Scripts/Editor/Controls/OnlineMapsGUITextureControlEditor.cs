@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 #if !UNITY_4_6 && !UNITY_4_7 && !UNITY_5_0 && !UNITY_5_1 && !UNITY_5_2
@@ -18,6 +18,7 @@ public class OnlineMapsGUITextureControlEditor : Editor
 {
     public override void OnInspectorGUI()
     {
+#if !UNITY_2017_2_OR_NEWER || ONLINEMAPS_GUITEXTURE
         bool dirty = false;
 
         OnlineMapsControlBase control = target as OnlineMapsControlBase;
@@ -40,5 +41,12 @@ public class OnlineMapsGUITextureControlEditor : Editor
             }
             else map.Redraw();
         }
+#else
+        EditorGUILayout.HelpBox("GUITexture is part of the legacy GUI, and will be removed in future versions of Unity Editor.", MessageType.Warning);
+        if (GUILayout.Button("Enable GUITexture"))
+        {
+            OnlineMapsEditor.AddCompilerDirective("ONLINEMAPS_GUITEXTURE");
+        }
+#endif
     } 
 }

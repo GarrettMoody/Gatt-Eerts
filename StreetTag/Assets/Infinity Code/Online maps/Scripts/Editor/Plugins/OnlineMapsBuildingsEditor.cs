@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using UnityEditor;
@@ -17,6 +17,8 @@ public class OnlineMapsBuildingsEditor:Editor
     private SerializedProperty pMaxBuilding;
     private SerializedProperty pMaxActiveBuildings;
     private SerializedProperty pMaterials;
+    private SerializedProperty pGenerateColliders;
+    private SerializedProperty pUseColorTag;
     private GUIContent cMinHeight;
     private GUIContent cMaxBuilding;
     private GUIContent cMaxActiveBuildings;
@@ -31,6 +33,8 @@ public class OnlineMapsBuildingsEditor:Editor
         pMaxBuilding = serializedObject.FindProperty("maxBuilding");
         pMaxActiveBuildings = serializedObject.FindProperty("maxActiveBuildings");
         pMaterials = serializedObject.FindProperty("materials");
+        pGenerateColliders = serializedObject.FindProperty("generateColliders");
+        pUseColorTag = serializedObject.FindProperty("useColorTag");
 
         cMinHeight = new GUIContent("Min Building Height");
         cMaxBuilding = new GUIContent("Max Number of Buildings (0-unlimited)");
@@ -64,9 +68,10 @@ public class OnlineMapsBuildingsEditor:Editor
         float labelWidth = EditorGUIUtility.labelWidth;
         EditorGUIUtility.labelWidth = 270;
 
-        
         EditorGUILayout.PropertyField(pMaxBuilding, cMaxBuilding);
         EditorGUILayout.PropertyField(pMaxActiveBuildings, cMaxActiveBuildings);
+        EditorGUILayout.PropertyField(pGenerateColliders);
+        EditorGUILayout.PropertyField(pUseColorTag);
 
         EditorGUIUtility.labelWidth = labelWidth;
 

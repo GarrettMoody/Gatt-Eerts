@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -12,6 +12,9 @@ public abstract class OnlineMapsTextWebService: OnlineMapsWebServiceAPI
     /// Event that occurs when a response is received from webservice.
     /// </summary>
     public Action<string> OnComplete;
+
+    public new Action<OnlineMapsTextWebService> OnSuccess;
+    public new Action<OnlineMapsTextWebService> OnFailed;
 
     protected string _response;
 
@@ -54,6 +57,15 @@ public abstract class OnlineMapsTextWebService: OnlineMapsWebServiceAPI
             _response = _status == OnlineMapsQueryStatus.success ? www.text : www.error;
 
             if (OnComplete != null) OnComplete(_response);
+            if (status == OnlineMapsQueryStatus.success)
+            {
+                if (OnSuccess != null) OnSuccess(this);
+            }
+            else
+            {
+                if (OnFailed != null) OnFailed(this);
+            }
+
             if (this is OnlineMapsGoogleAPIQuery)
             {
                 OnlineMapsGoogleAPIQuery q = this as OnlineMapsGoogleAPIQuery;

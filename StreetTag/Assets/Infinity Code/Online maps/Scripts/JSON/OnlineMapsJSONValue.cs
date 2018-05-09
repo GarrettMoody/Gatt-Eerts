@@ -1,4 +1,4 @@
-﻿/*     INFINITY CODE 2013-2017      */
+﻿/*     INFINITY CODE 2013-2018      */
 /*   http://www.infinity-code.com   */
 
 using System;
@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
+using UnityEngine;
 
 /// <summary>
 /// The wrapper for JSON value.
@@ -64,7 +65,7 @@ public class OnlineMapsJSONValue : OnlineMapsJSONItem
                 _type = ValueType.LONG;
                 _value = value;
             }
-            else if (value is int || value is short)
+            else if (value is int || value is short || value is byte)
             {
                 _type = ValueType.LONG;
                 _value = Convert.ChangeType(value, typeof(long));
@@ -154,9 +155,16 @@ public class OnlineMapsJSONValue : OnlineMapsJSONItem
         else if (_type == ValueType.LONG)
         {
             if (t == typeof(long)) return Convert.ChangeType(_value, t);
-            if (t == typeof(int)) return Convert.ChangeType((long)_value, t);
-            if (t == typeof(float)) return Convert.ChangeType((long)_value, t);
-            if (t == typeof(double)) return Convert.ChangeType((long)_value, t);
+
+            try
+            {
+                return Convert.ChangeType((long)_value, t);
+            }
+            catch (Exception e)
+            {
+                Debug.Log(e.Message + "\n" + e.StackTrace);
+                return null;
+            }
         }
         else if (_type == ValueType.STRING)
         {
