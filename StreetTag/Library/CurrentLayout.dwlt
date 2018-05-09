@@ -367,14 +367,14 @@ MonoBehaviour:
     height: 538
   m_PersistentViewDataDictionary: {fileID: 0}
   m_SceneLighting: 1
-  lastFramingTime: 3962.854295015335
+  lastFramingTime: 1409.1297481060028
   m_2DMode: 0
   m_isRotationLocked: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: -3.324797, y: 14.6642475, z: 19.325195}
+    m_Target: {x: -437.41733, y: 108.469574, z: 455.1421}
     speed: 2
-    m_Value: {x: -3.324797, y: 14.6642475, z: 19.325195}
+    m_Value: {x: -437.41733, y: 108.469574, z: 455.1421}
   m_RenderMode: 0
   m_ValidateTrueMetals: 0
   m_SceneViewState:
@@ -398,13 +398,13 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
   m_Rotation:
-    m_Target: {x: -0.06775765, y: 0.018567445, z: -0.0012599813, w: -0.99752825}
+    m_Target: {x: -0.095134825, y: 0.36214525, z: -0.037184037, w: -0.9265083}
     speed: 2
-    m_Value: {x: -0.06775765, y: 0.018567445, z: -0.0012599813, w: -0.99752825}
+    m_Value: {x: -0.095134825, y: 0.36214527, z: -0.037184037, w: -0.92650837}
   m_Size:
-    m_Target: 27.59761
+    m_Target: 22
     speed: 2
-    m_Value: 27.59761
+    m_Value: 22
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -445,9 +445,9 @@ MonoBehaviour:
   m_PersistentViewDataDictionary: {fileID: 0}
   m_TreeViewState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 00310000
-    m_LastClickedID: 12544
-    m_ExpandedIDs: 9efbffff00000000bc2c0000882e0000e22e0000202f0000e22f00002c300000b0310000d0320000
+    m_SelectedIDs: f6580000
+    m_LastClickedID: 0
+    m_ExpandedIDs: 9cbcffff6ec0ffffe4cbffff5ad0ffffd6d4fffff0e6ffff96e8ffffe4ebffffd8f1ffffccf5ffffd2f6ffff0af8ffff9efbffff00000000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -466,7 +466,7 @@ MonoBehaviour:
       m_ClientGUIView: {fileID: 8}
     m_SearchString: 
   m_ExpandedScenes:
-  - Main Menu
+  - Nackers Maps
   m_CurrenRootInstanceID: 0
   m_Locked: 0
   m_CurrentSortingName: TransformSorting
@@ -536,19 +536,19 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SearchArea: 0
     m_Folders:
-    - Assets/Graphics/Main Menu
+    - Assets/Scenes
   m_ViewMode: 1
   m_StartGridSize: 69
   m_LastFolders:
-  - Assets/Graphics/Main Menu
+  - Assets/Scenes
   m_LastFoldersGridSize: 69
   m_LastProjectPath: /Users/garrettmoody/Documents/GitHub/Gatt-Eerts/StreetTag
   m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: a2290000
-    m_LastClickedID: 10658
-    m_ExpandedIDs: 00000000162900009e290000e82900006c2a000000ca9a3bffffff7f
+    m_SelectedIDs: 662a0000
+    m_LastClickedID: 10854
+    m_ExpandedIDs: 0000000026290000b8290000f829000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -564,7 +564,7 @@ MonoBehaviour:
       m_IsRenaming: 0
       m_OriginalEventType: 11
       m_IsRenamingFilename: 1
-      m_ClientGUIView: {fileID: 0}
+      m_ClientGUIView: {fileID: 10}
     m_SearchString: 
     m_CreateAssetUtility:
       m_EndAction: {fileID: 0}
@@ -576,7 +576,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000162900009e290000e82900006c2a0000
+    m_ExpandedIDs: 0000000026290000b8290000f8290000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -604,7 +604,7 @@ MonoBehaviour:
     m_SelectedInstanceIDs: 
     m_LastClickedInstanceID: 0
     m_HadKeyboardFocusLastEvent: 1
-    m_ExpandedInstanceIDs: c6230000fe03f9ff00000000002a0000
+    m_ExpandedInstanceIDs: c6230000fe03f9ff00000000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
