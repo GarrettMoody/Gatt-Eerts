@@ -262,7 +262,7 @@ MonoBehaviour:
   markers:
   - label: Geoph
     range:
-      max: 10
+      max: 20
       min: 3
       maxLimit: 20
       minLimit: 3
