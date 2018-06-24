@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour {
 
+	public Texture2D userMarkerTexture;
+
 	private int defaultZoom = 10;
 	private int stormMarkerIndex = 3;
 	private int mikeMarkerIndex = 2;
@@ -16,13 +18,31 @@ public class GameManager : MonoBehaviour {
 	private double JeffLat = 44.564142;
 	private double JeffLong = -88.157449;
 
+	private OnlineMapsMarker userMarker;
+
 	void Start()
 	{
 		OnlineMaps.instance.OnChangeZoom += OnChangeZoom;
 		stormMarker = OnlineMaps.instance.markers[stormMarkerIndex];
 		jeffMarker = OnlineMaps.instance.markers[jeffMarkerIndex];
 		mikeMarker = OnlineMaps.instance.markers[mikeMarkerIndex];
-		garrettMarker = OnlineMaps.instance.markers[garrettMarkerIndex];       
+		garrettMarker = OnlineMaps.instance.markers[garrettMarkerIndex]; 
+
+		// Create a new marker.
+		userMarker = OnlineMaps.instance.AddMarker(new Vector2(0, 0), userMarkerTexture, "Player");
+
+		// Get instance of LocationService.
+		OnlineMapsLocationService locationService = OnlineMapsLocationService.instance;
+
+		if (locationService == null)
+		{
+			Debug.LogError(
+				"Location Service not found.\nAdd Location Service Component (Component / Infinity Code / Online Maps / Plugins / Location Service).");
+			return;
+		}
+
+		// Subscribe to the change location event.
+		locationService.OnLocationChanged += OnLocationChanged;
 	}
 
 	private void OnChangeZoom() {
@@ -59,5 +79,15 @@ public class GameManager : MonoBehaviour {
 		{
 			MoveGuys(0.01, 0.00);
 		}      
+	}
+
+	// When the location has changed
+	private void OnLocationChanged(Vector2 position)
+	{
+		// Change the position of the marker.
+		userMarker.position = position;
+
+		// Redraw map.
+		OnlineMaps.instance.Redraw();
 	}
 }
