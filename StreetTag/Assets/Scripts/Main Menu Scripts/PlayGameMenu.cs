@@ -8,7 +8,7 @@ public class PlayGameMenu : MonoBehaviour {
 	public Canvas playGameCanvas;
 	public GameObject startGamePanel;
 	public GameObject createGamePanel;
-	public GameObject joinGamePanel;
+	//public GameObject joinGamePanel;
 	public GameObject selectLocationPanel;
 	public GameObject gameConfirmationPanel;
 	public GameObject teamPreviewPanel;
@@ -16,12 +16,13 @@ public class PlayGameMenu : MonoBehaviour {
 	public Button nextButton;
 	public Button backButton;
 	public Button closeButton;
+	public Button invitePlayersButton;
 
 	private GameObject activePanel;
 
 	// Use this for initialization
 	void Start () {
-		playGameCanvas.gameObject.SetActive (false);
+		closePlayGameMenu ();
 	}
 
 	public void openPlayGameMenu() {
@@ -29,6 +30,7 @@ public class PlayGameMenu : MonoBehaviour {
 		startGamePanel.gameObject.SetActive (true);
 		nextButton.gameObject.SetActive (false);
 		backButton.gameObject.SetActive (false);
+		invitePlayersButton.gameObject.SetActive (false);
 		closeButton.gameObject.SetActive (true);
 		activePanel = startGamePanel;
 
@@ -36,6 +38,19 @@ public class PlayGameMenu : MonoBehaviour {
 
 	public void closePlayGameMenu() {
 		playGameCanvas.gameObject.SetActive (false);
+
+		startGamePanel.gameObject.SetActive (false);
+		createGamePanel.gameObject.SetActive (false);
+		//joinGamePanel.gameObject.SetActive (false);
+		selectLocationPanel.gameObject.SetActive (false);
+		gameConfirmationPanel.gameObject.SetActive (false);
+		teamPreviewPanel.gameObject.SetActive (false);
+		invitePlayersPanel.gameObject.SetActive (false);
+
+		nextButton.gameObject.SetActive (false);
+		backButton.gameObject.SetActive (false);
+		closeButton.gameObject.SetActive (false);
+		invitePlayersButton.gameObject.SetActive (false);
 	}
 
 	public void createGame() {
@@ -50,14 +65,14 @@ public class PlayGameMenu : MonoBehaviour {
 
 	}
 
-	void openNextScreen(GameObject currentScreen, GameObject nextScreen) {
-		currentScreen.gameObject.SetActive (false);
+	void openNextScreen(GameObject nextScreen) {
+		activePanel.gameObject.SetActive (false);
 		nextScreen.gameObject.SetActive (true);
 		activePanel = nextScreen;
 	}
 
-	void openPrevScreen (GameObject currentScreen, GameObject prevScreen) {
-		currentScreen.gameObject.SetActive (false);
+	void openPrevScreen (GameObject prevScreen) {
+		activePanel.gameObject.SetActive (false);
 		prevScreen.gameObject.SetActive (true);
 		activePanel = prevScreen;
 	}
@@ -66,32 +81,43 @@ public class PlayGameMenu : MonoBehaviour {
 		if (activePanel == startGamePanel) {//should never happen; next button will be hidden on this panel
 			createGame ();
 		} else if (activePanel == createGamePanel) {
-			openNextScreen (createGamePanel, selectLocationPanel);
-		} else if (activePanel == selectLocationPanel || activePanel == invitePlayersPanel) {
-			openNextScreen (selectLocationPanel, gameConfirmationPanel);
+			openNextScreen (selectLocationPanel);
+		} else if (activePanel == selectLocationPanel) {
+			openNextScreen (gameConfirmationPanel);
 		} else if (activePanel == gameConfirmationPanel) {
-			openNextScreen (gameConfirmationPanel, teamPreviewPanel);
+			openNextScreen (teamPreviewPanel);
+			invitePlayersButton.gameObject.SetActive (true);
 		} else if (activePanel == teamPreviewPanel) {
 			closePlayGameMenu ();
+		} else if (activePanel == invitePlayersPanel) {
+			openNextScreen (teamPreviewPanel);
+			invitePlayersButton.gameObject.SetActive (true);
 		}
 	}
 
 	public void backButtonOnClickListner() {
-		if (activePanel == startGamePanel) {//should never happen; next button will be hidden on this panel
+		if (activePanel == startGamePanel) {//should never happen; back button will be hidden on this panel
 			closePlayGameMenu ();
 		} else if (activePanel == createGamePanel) {
-			openPrevScreen (createGamePanel, startGamePanel);
+			openPrevScreen (startGamePanel);
 			backButton.gameObject.SetActive (false);
 			nextButton.gameObject.SetActive (false);
 		} else if (activePanel == selectLocationPanel) {
-			openPrevScreen (selectLocationPanel, createGamePanel);
+			openPrevScreen (createGamePanel);
 		} else if (activePanel == gameConfirmationPanel) {
-			openPrevScreen (gameConfirmationPanel, selectLocationPanel);
+			openPrevScreen (selectLocationPanel);
 		} else if (activePanel == teamPreviewPanel) {
-			openPrevScreen (teamPreviewPanel, gameConfirmationPanel);
+			openPrevScreen (gameConfirmationPanel);
+			invitePlayersButton.gameObject.SetActive (false);
 		} else if (activePanel == invitePlayersPanel) {
-			openPrevScreen (invitePlayersPanel, teamPreviewPanel);
+			openPrevScreen (teamPreviewPanel);
+			invitePlayersButton.gameObject.SetActive (true);
 		}
+	}
+
+	public void invitePlayersButtonOnClickListner() {
+		openNextScreen (invitePlayersPanel);
+		invitePlayersButton.gameObject.SetActive (false);
 	}
 
 }
