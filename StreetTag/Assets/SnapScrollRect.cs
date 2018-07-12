@@ -63,7 +63,7 @@ public class SnapScrollRect : MonoBehaviour {
 	public void OnValueChange() {
 		float verticalVelocity = Mathf.Abs (scrollRect.velocity.y);
 		//Debug.Log (verticalVelocity);
-		if (verticalVelocity > 20f) {
+		if (verticalVelocity > 50f) {
 			isScrolling = true;
 		} else {
 			isScrolling = false;
